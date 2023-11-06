@@ -23,7 +23,10 @@ import org.jetbrains.kotlin.fir.expressions.*
 import org.jetbrains.kotlin.fir.expressions.builder.*
 import org.jetbrains.kotlin.fir.expressions.impl.FirContractCallBlock
 import org.jetbrains.kotlin.fir.moduleData
+import org.jetbrains.kotlin.fir.references.FirResolvedErrorReference
+import org.jetbrains.kotlin.fir.references.FirResolvedNamedReference
 import org.jetbrains.kotlin.fir.references.builder.buildSimpleNamedReference
+import org.jetbrains.kotlin.fir.references.toResolvedCallableSymbol
 import org.jetbrains.kotlin.fir.resolve.ResolutionMode
 import org.jetbrains.kotlin.fir.resolve.ScopeSession
 import org.jetbrains.kotlin.fir.resolve.transformers.ReturnTypeCalculatorForFullBodyResolve
@@ -174,8 +177,10 @@ abstract class FirAbstractContractResolveTransformerDispatcher(
                     .apply { replaceConeTypeOrNull(session.builtinTypes.unitType.coneType) }
             }
 
-            if (resolvedContractCall.toResolvedCallableSymbol()?.callableId != FirContractsDslNames.CONTRACT) {
+            fun errorInContractCall(): T {
                 if (hasBodyContract) {
+                    // Until the contract description is replaced with a resolved one, a call rests both in the description
+                    // and in the callable body (scoped inside a marker block). Here we patch the second call occurrence.
                     owner.body.replaceFirstStatement<FirContractCallBlock> { resolvedContractCall }
                 }
                 owner.replaceContractDescription(newContractDescription = null)
@@ -183,17 +188,29 @@ abstract class FirAbstractContractResolveTransformerDispatcher(
                 return owner
             }
 
+            val resolvedContractCallReference = resolvedContractCall.calleeReference as? FirResolvedNamedReference ?: return errorInContractCall()
+
+            if (resolvedContractCallReference.toResolvedCallableSymbol()?.callableId != FirContractsDslNames.CONTRACT) {
+                return errorInContractCall()
+            }
+
+            if (resolvedContractCallReference is FirResolvedErrorReference) {
+                return errorInContractCall()
+            }
+
+            val lambdaExpression = when (val argument = resolvedContractCall.arguments.singleOrNull()) {
+                is FirNamedArgumentExpression -> argument.expression as? FirAnonymousFunctionExpression
+                is FirAnonymousFunctionExpression -> argument
+                else -> null
+            } ?: return errorInContractCall()
+
+            val lambdaBody = lambdaExpression.anonymousFunction.body ?: return errorInContractCall()
+
             if (hasBodyContract) {
                 // Until the contract description is replaced with a resolved one, a call rests both in the description
                 // and in the callable body (scoped inside a marker block). Here we patch the second call occurrence.
                 owner.body.replaceFirstStatement<FirContractCallBlock> { FirContractCallBlock(resolvedContractCall) }
             }
-
-            val argument = resolvedContractCall.arguments.singleOrNull() as? FirAnonymousFunctionExpression
-                ?: return transformOwnerOfErrorContract(owner)
-
-            val lambdaBody = argument.anonymousFunction.body
-                ?: return transformOwnerOfErrorContract(owner)
 
             val resolvedContractDescription = buildResolvedContractDescription {
                 val effectExtractor = ConeEffectExtractor(session, owner, valueParameters)
@@ -362,11 +379,6 @@ abstract class FirAbstractContractResolveTransformerDispatcher(
             return enumEntry
         }
 
-        private fun <T : FirContractDescriptionOwner> transformOwnerOfErrorContract(owner: T): T {
-            dataFlowAnalyzer.exitContractDescription()
-            return owner
-        }
-
         private val FirContractDescriptionOwner.hasContractToResolve: Boolean
             get() = contractDescription is FirLegacyRawContractDescription || contractDescription is FirRawContractDescription
     }
@@ -382,4 +394,3 @@ private val FirContractDescriptionOwner.body: FirBlock
         is FirFunction -> body!!
     }
 
-private fun FirContractDescriptionOwner.error(): Nothing = throw IllegalStateException("${this::class} can not be a contract owner")
