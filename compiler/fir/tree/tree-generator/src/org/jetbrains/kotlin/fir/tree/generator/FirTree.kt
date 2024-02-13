@@ -1265,6 +1265,12 @@ object FirTree : AbstractFirTreeBuilder() {
         +field("contractCall", functionCall)
         +field("diagnostic", coneDiagnosticType, nullable = true)
     }
+    
+    val errorContractDescription: Element by element(Contracts) {
+        parent(contractDescription)
+
+        +field("diagnostic", coneDiagnosticType, nullable = true)
+    }
 
     private object FieldSets {
         val typeArguments = fieldSet(listField("typeArguments", typeProjection, useMutableOrEmpty = true, withReplace = true))

@@ -13,6 +13,7 @@ import org.jetbrains.kotlin.diagnostics.reportOn
 import org.jetbrains.kotlin.fir.analysis.checkers.MppCheckerKind
 import org.jetbrains.kotlin.fir.analysis.checkers.context.CheckerContext
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors
+import org.jetbrains.kotlin.fir.contracts.FirErrorContractDescription
 import org.jetbrains.kotlin.fir.contracts.FirResolvedContractDescription
 import org.jetbrains.kotlin.fir.contracts.description.*
 import org.jetbrains.kotlin.fir.declarations.FirAnonymousFunction
@@ -25,16 +26,23 @@ import org.jetbrains.kotlin.fir.types.ConeKotlinType
 
 object FirContractChecker : FirFunctionChecker(MppCheckerKind.Common) {
     private val EMPTY_CONTRACT_MESSAGE = "Empty contract block is not allowed"
+    private val INVALID_CONTRACT_BLOCK = "Contract block could not be resolved"
 
     override fun check(declaration: FirFunction, context: CheckerContext, reporter: DiagnosticReporter) {
         if (declaration !is FirContractDescriptionOwner) return
-        val contractDescription = declaration.contractDescription as? FirResolvedContractDescription ?: return
-
-        val reportedNotAllowed = checkContractNotAllowed(declaration, contractDescription, context, reporter)
-        if (reportedNotAllowed) return
-        checkUnresolvedEffects(contractDescription, context, reporter)
-        if (contractDescription.effects.isEmpty() && contractDescription.unresolvedEffects.isEmpty()) {
-            reporter.reportOn(contractDescription.source, FirErrors.ERROR_IN_CONTRACT_DESCRIPTION, EMPTY_CONTRACT_MESSAGE, context)
+        when (val contractDescription = declaration.contractDescription) {
+            is FirResolvedContractDescription -> {
+                val reportedNotAllowed = checkContractNotAllowed(declaration, contractDescription, context, reporter)
+                if (reportedNotAllowed) return
+                checkUnresolvedEffects(contractDescription, context, reporter)
+                checkContractNotAllowed(declaration, contractDescription, context, reporter)
+                if (contractDescription.effects.isEmpty() && contractDescription.unresolvedEffects.isEmpty()) {
+                    reporter.reportOn(contractDescription.source, FirErrors.ERROR_IN_CONTRACT_DESCRIPTION, EMPTY_CONTRACT_MESSAGE, context)
+                }
+            }
+            is FirErrorContractDescription -> {
+                reporter.reportOn(contractDescription.source, FirErrors.ERROR_IN_CONTRACT_DESCRIPTION, INVALID_CONTRACT_BLOCK, context)
+            }
         }
     }
 
