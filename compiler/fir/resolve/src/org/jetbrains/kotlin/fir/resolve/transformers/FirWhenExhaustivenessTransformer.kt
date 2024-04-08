@@ -19,18 +19,21 @@ import org.jetbrains.kotlin.fir.declarations.utils.modality
 import org.jetbrains.kotlin.fir.expressions.*
 import org.jetbrains.kotlin.fir.expressions.impl.FirElseIfTrueCondition
 import org.jetbrains.kotlin.fir.resolve.BodyResolveComponents
+import org.jetbrains.kotlin.fir.resolve.dfa.NegativeTypeStatement
 import org.jetbrains.kotlin.fir.resolve.fullyExpandedType
 import org.jetbrains.kotlin.fir.resolve.providers.symbolProvider
 import org.jetbrains.kotlin.fir.resolve.toRegularClassSymbol
 import org.jetbrains.kotlin.fir.resolve.toSymbol
 import org.jetbrains.kotlin.fir.symbols.FirBasedSymbol
 import org.jetbrains.kotlin.fir.symbols.impl.FirClassSymbol
+import org.jetbrains.kotlin.fir.symbols.impl.FirEnumEntrySymbol
 import org.jetbrains.kotlin.fir.symbols.impl.FirRegularClassSymbol
 import org.jetbrains.kotlin.fir.symbols.impl.FirVariableSymbol
 import org.jetbrains.kotlin.fir.types.*
 import org.jetbrains.kotlin.fir.visitors.FirTransformer
 import org.jetbrains.kotlin.fir.visitors.FirVisitor
 import org.jetbrains.kotlin.name.StandardClassIds
+import org.jetbrains.kotlin.types.SmartcastStability
 import org.jetbrains.kotlin.types.TypeApproximatorConfiguration
 
 class FirWhenExhaustivenessTransformer(private val bodyResolveComponents: BodyResolveComponents) : FirTransformer<Any?>() {
@@ -48,7 +51,7 @@ class FirWhenExhaustivenessTransformer(private val bodyResolveComponents: BodyRe
             return buildList {
                 for (type in subjectType.unwrapTypeParameterAndIntersectionTypes(session)) {
                     val checkers = getCheckers(type, session)
-                    collectMissingCases(checkers, whenExpression, type, session)
+                    collectMissingCases(checkers, whenExpression, type, null, session)
                 }
             }
         }
@@ -122,10 +125,11 @@ class FirWhenExhaustivenessTransformer(private val bodyResolveComponents: BodyRe
             checkers: List<WhenExhaustivenessChecker>,
             whenExpression: FirWhenExpression,
             subjectType: ConeKotlinType,
+            negative: NegativeTypeStatement?,
             session: FirSession
         ) {
             for (checker in checkers) {
-                checker.computeMissingCases(whenExpression, subjectType, session, this)
+                checker.computeMissingCases(whenExpression, subjectType, negative, session, this)
             }
             if (isEmpty() && whenExpression.branches.isEmpty()) {
                 add(WhenMissingCase.Unknown)
@@ -202,6 +206,11 @@ class FirWhenExhaustivenessTransformer(private val bodyResolveComponents: BodyRe
             return ExhaustivenessStatus.ExhaustiveAsNothing
         }
 
+        val negative =
+            whenExpression.subject
+                ?.let { bodyResolveComponents.dataFlowAnalyzer.getNegativeTypesFromSmartcastInfo(it) }
+                ?.let { (stability, info) -> info.takeIf { stability == SmartcastStability.STABLE_VALUE } }
+
         var status: ExhaustivenessStatus = ExhaustivenessStatus.NotExhaustive.NO_ELSE_BRANCH
 
         val unwrappedIntersectionTypes = approximatedType.unwrapTypeParameterAndIntersectionTypes(session)
@@ -211,7 +220,7 @@ class FirWhenExhaustivenessTransformer(private val bodyResolveComponents: BodyRe
             if (unwrappedSubjectType.toRegularClassSymbol(session)?.isExpect != true ||
                 unwrappedSubjectType.classId == StandardClassIds.Boolean
             ) {
-                val localStatus = computeStatusForNonIntersectionType(unwrappedSubjectType, session, whenExpression)
+                val localStatus = computeStatusForNonIntersectionType(unwrappedSubjectType, negative, session, whenExpression)
                 when {
                     localStatus === ExhaustivenessStatus.ProperlyExhaustive -> {
                         status = localStatus
@@ -229,6 +238,7 @@ class FirWhenExhaustivenessTransformer(private val bodyResolveComponents: BodyRe
 
     private fun computeStatusForNonIntersectionType(
         unwrappedSubjectType: ConeKotlinType,
+        negative: NegativeTypeStatement?,
         session: FirSession,
         whenExpression: FirWhenExpression,
     ): ExhaustivenessStatus {
@@ -238,7 +248,7 @@ class FirWhenExhaustivenessTransformer(private val bodyResolveComponents: BodyRe
         }
 
         val whenMissingCases = mutableListOf<WhenMissingCase>()
-        whenMissingCases.collectMissingCases(checkers, whenExpression, unwrappedSubjectType, session)
+        whenMissingCases.collectMissingCases(checkers, whenExpression, unwrappedSubjectType, negative, session)
 
         return if (whenMissingCases.isEmpty()) {
             ExhaustivenessStatus.ProperlyExhaustive
@@ -253,6 +263,7 @@ private sealed class WhenExhaustivenessChecker {
     abstract fun computeMissingCases(
         whenExpression: FirWhenExpression,
         subjectType: ConeKotlinType,
+        negative: NegativeTypeStatement?,
         session: FirSession,
         destination: MutableCollection<WhenMissingCase>
     )
@@ -288,6 +299,7 @@ private object WhenOnNullableExhaustivenessChecker : WhenExhaustivenessChecker()
     override fun computeMissingCases(
         whenExpression: FirWhenExpression,
         subjectType: ConeKotlinType,
+        negative: NegativeTypeStatement?,
         session: FirSession,
         destination: MutableCollection<WhenMissingCase>
     ) {
@@ -335,6 +347,7 @@ private object WhenOnBooleanExhaustivenessChecker : WhenExhaustivenessChecker() 
     override fun computeMissingCases(
         whenExpression: FirWhenExpression,
         subjectType: ConeKotlinType,
+        negative: NegativeTypeStatement?,
         session: FirSession,
         destination: MutableCollection<WhenMissingCase>,
     ) {
@@ -378,6 +391,7 @@ private object WhenOnEnumExhaustivenessChecker : WhenExhaustivenessChecker() {
     override fun computeMissingCases(
         whenExpression: FirWhenExpression,
         subjectType: ConeKotlinType,
+        negative: NegativeTypeStatement?,
         session: FirSession,
         destination: MutableCollection<WhenMissingCase>
     ) {
@@ -385,6 +399,7 @@ private object WhenOnEnumExhaustivenessChecker : WhenExhaustivenessChecker() {
 
         val enumClass = (subjectType.toSymbol(session) as FirRegularClassSymbol).fir
         val notCheckedEntries = enumClass.declarations.mapNotNullTo(mutableSetOf()) { it as? FirEnumEntry }
+        notCheckedEntries.removeAll(negative?.entries?.map(FirEnumEntrySymbol::fir)?.toSet() ?: emptySet())
         whenExpression.accept(ConditionChecker, notCheckedEntries)
         notCheckedEntries.mapTo(destination) { WhenMissingCase.EnumCheckIsMissing(it.symbol.callableId) }
     }
@@ -410,13 +425,15 @@ private object WhenOnSealedClassExhaustivenessChecker : WhenExhaustivenessChecke
     override fun computeMissingCases(
         whenExpression: FirWhenExpression,
         subjectType: ConeKotlinType,
+        negative: NegativeTypeStatement?,
         session: FirSession,
         destination: MutableCollection<WhenMissingCase>
     ) {
         val allSubclasses = subjectType.toSymbol(session)?.collectAllSubclasses(session) ?: return
+        val negativeSubclasses = negative?.types?.mapNotNull { it.toSymbol(session) }?.toSet() ?: emptySet()
         val checkedSubclasses = mutableSetOf<FirBasedSymbol<*>>()
         whenExpression.accept(ConditionChecker, Flags(allSubclasses, checkedSubclasses, session))
-        (allSubclasses - checkedSubclasses).mapNotNullTo(destination) {
+        (allSubclasses - negativeSubclasses - checkedSubclasses).mapNotNullTo(destination) {
             when (it) {
                 is FirClassSymbol<*> -> WhenMissingCase.IsTypeCheckIsMissing(
                     it.classId,
@@ -509,6 +526,7 @@ private object WhenOnNothingExhaustivenessChecker : WhenExhaustivenessChecker() 
     override fun computeMissingCases(
         whenExpression: FirWhenExpression,
         subjectType: ConeKotlinType,
+        negative: NegativeTypeStatement?,
         session: FirSession,
         destination: MutableCollection<WhenMissingCase>
     ) {
@@ -528,6 +546,7 @@ private data object WhenSelfTypeExhaustivenessChecker : WhenExhaustivenessChecke
     override fun computeMissingCases(
         whenExpression: FirWhenExpression,
         subjectType: ConeKotlinType,
+        negative: NegativeTypeStatement?,
         session: FirSession,
         destination: MutableCollection<WhenMissingCase>,
     ) {
