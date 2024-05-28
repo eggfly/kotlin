@@ -56,7 +56,8 @@ sealed class JsIrBinary(
 
     var generateTs: Boolean = false
 
-    val linkTask: TaskProvider<KotlinJsIrLink> = project.registerTask(linkTaskName, KotlinJsIrLink::class.java, listOf(project, target.platformType))
+    val linkTask: TaskProvider<KotlinJsIrLink> =
+        project.registerTask(linkTaskName, KotlinJsIrLink::class.java, listOf(project, target.platformType))
 
     private val _linkSyncTask: TaskProvider<DefaultIncrementalSyncTask>? =
         if (target.wasmTargetType == KotlinWasmTargetType.WASI) {
@@ -165,6 +166,56 @@ sealed class JsIrBinary(
     }
 }
 
+interface WasmBinary {
+    val target: KotlinJsIrTarget
+
+    val compilation: KotlinJsIrCompilation
+
+    val name: String
+
+    val mode: KotlinJsBinaryMode
+
+    val linkTask: TaskProvider<KotlinJsIrLink>
+
+    val optimizeTaskName: String
+
+    val optimizeTask: TaskProvider<BinaryenExec>
+}
+
+internal fun WasmBinary.configureOptimizeTask(taskProvider: TaskProvider<BinaryenExec>) {
+    val project = target.project
+
+    taskProvider.configure { task ->
+        val compiledWasmFile = linkTask.flatMap { link ->
+            link.destinationDirectory.locationOnly.zip(link.compilerOptions.moduleName) { destDir, moduleName ->
+                destDir.file("$moduleName.wasm")
+            }
+        }
+
+        task.dependsOn(linkTask)
+        task.inputFileProperty.set(compiledWasmFile)
+
+        val outputDirectory: Provider<Directory> = target.project.layout.buildDirectory
+            .dir(COMPILE_SYNC)
+            .map { it.dir(compilation.target.targetName) }
+            .map { it.dir(compilation.name) }
+            .map { it.dir(name) }
+            .map { it.dir("optimized") }
+
+        task.outputDirectory.set(outputDirectory)
+
+        task.outputFileName.set(
+            compiledWasmFile.map { it.asFile.name }
+        )
+    }
+
+    if (compilation.isMain() && mode == KotlinJsBinaryMode.PRODUCTION) {
+        if (target.wasmTargetType == KotlinWasmTargetType.WASI) {
+            project.tasks.named(LifecycleBasePlugin.ASSEMBLE_TASK_NAME).dependsOn(taskProvider)
+        }
+    }
+}
+
 open class Executable(
     compilation: KotlinJsIrCompilation,
     name: String,
@@ -190,7 +241,7 @@ open class Executable(
 }
 
 @OptIn(ExperimentalWasmDsl::class)
-open class ExecutableWasm(
+class ExecutableWasm(
     compilation: KotlinJsIrCompilation,
     name: String,
     mode: KotlinJsBinaryMode,
@@ -198,9 +249,9 @@ open class ExecutableWasm(
     compilation,
     name,
     mode
-) {
+), WasmBinary {
     override fun syncInputConfigure(syncTask: DefaultIncrementalSyncTask) {
-        if (compilation.isMain() && mode == KotlinJsBinaryMode.PRODUCTION) {
+        if (mode == KotlinJsBinaryMode.PRODUCTION) {
             syncTask.from.from(optimizeTask.flatMap { it.outputFileProperty.map { it.asFile.parentFile } })
             syncTask.dependsOn(optimizeTask)
         } else {
@@ -208,35 +259,12 @@ open class ExecutableWasm(
         }
     }
 
-    val optimizeTaskName: String = optimizeTaskName()
+    override val optimizeTaskName: String = optimizeTaskName()
 
-    val optimizeTask: TaskProvider<BinaryenExec> = BinaryenExec.create(compilation, optimizeTaskName) {
+    override val optimizeTask: TaskProvider<BinaryenExec> = BinaryenExec.create(compilation, optimizeTaskName) {
         val compileWasmDestDir = linkTask.map {
             it.destinationDirectory
         }
-
-        val compiledWasmFile = linkTask.flatMap { link ->
-            link.destinationDirectory.locationOnly.zip(link.compilerOptions.moduleName) { destDir, moduleName ->
-                destDir.file("$moduleName.wasm")
-            }
-        }
-
-        dependsOn(linkTask)
-        inputFileProperty.set(compiledWasmFile)
-
-        val outputDirectory: Provider<Directory> = target.project.layout.buildDirectory
-            .dir(COMPILE_SYNC)
-            .map { it.dir(compilation.target.targetName) }
-            .map { it.dir(compilation.name) }
-            .map { it.dir(name) }
-            .map { it.dir("optimized") }
-
-        this.outputDirectory.set(outputDirectory)
-
-        outputFileName.set(
-            compiledWasmFile.map { it.asFile.name }
-        )
-
         doLast {
             fs.copy {
                 it.from(compileWasmDestDir)
@@ -245,11 +273,7 @@ open class ExecutableWasm(
             }
         }
     }.also { binaryenExec ->
-        if (compilation.isMain() && mode == KotlinJsBinaryMode.PRODUCTION) {
-            if (target.wasmTargetType == KotlinWasmTargetType.WASI) {
-                project.tasks.named(LifecycleBasePlugin.ASSEMBLE_TASK_NAME).dependsOn(binaryenExec)
-            }
-        }
+        configureOptimizeTask(binaryenExec)
     }
 
     val mainOptimizedFile: Provider<RegularFile> = optimizeTask.flatMap {
@@ -260,7 +284,7 @@ open class ExecutableWasm(
         "${linkTaskName}Optimize"
 }
 
-class Library(
+open class Library(
     compilation: KotlinJsIrCompilation,
     name: String,
     mode: KotlinJsBinaryMode,
@@ -269,5 +293,50 @@ class Library(
     name,
     mode
 )
+
+class LibraryWasm(
+    compilation: KotlinJsIrCompilation,
+    name: String,
+    mode: KotlinJsBinaryMode,
+) : Library(
+    compilation,
+    name,
+    mode
+), WasmBinary {
+    override fun syncInputConfigure(syncTask: DefaultIncrementalSyncTask) {
+        if (mode == KotlinJsBinaryMode.PRODUCTION) {
+            syncTask.from.from(optimizeTask.flatMap { it.outputFileProperty.map { it.asFile.parentFile } })
+            syncTask.dependsOn(optimizeTask)
+        } else {
+            super.syncInputConfigure(syncTask)
+        }
+    }
+
+    override val optimizeTaskName: String = optimizeTaskName()
+
+    @OptIn(ExperimentalWasmDsl::class)
+    override val optimizeTask: TaskProvider<BinaryenExec> = BinaryenExec.create(compilation, optimizeTaskName) {
+        val compileWasmDestDir = linkTask.map {
+            it.destinationDirectory
+        }
+
+        doLast {
+            fs.copy {
+                it.from(compileWasmDestDir)
+                it.into(outputDirectory)
+                it.eachFile {
+                    if (it.relativePath.getFile(outputDirectory.get().asFile).exists()) {
+                        it.exclude()
+                    }
+                }
+            }
+        }
+    }.also { binaryenExec ->
+        configureOptimizeTask(binaryenExec)
+    }
+
+    private fun optimizeTaskName(): String =
+        "${linkTaskName}Optimize"
+}
 
 internal const val COMPILE_SYNC = "compileSync"
