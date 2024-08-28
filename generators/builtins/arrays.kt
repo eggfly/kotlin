@@ -11,12 +11,18 @@ import org.jetbrains.kotlin.generators.builtins.numbers.primitives.*
 import java.io.PrintWriter
 
 abstract class GenerateArrays(val writer: PrintWriter, val primitiveArrays: Boolean) : BuiltInsGenerator {
+
+    protected open val fileAnnotations: List<String> = emptyList()
+
     override fun generate() {
         writer.print(generateFile().build())
     }
 
     private fun generateFile(): FileBuilder {
-        return file(this::class) { generateClasses() }.apply { this.modifyGeneratedFile() }
+        return file(this::class) {
+            for (fileAnnotation in fileAnnotations) annotate(fileAnnotation)
+            generateClasses()
+        }.apply { this.modifyGeneratedFile() }
     }
 
     internal abstract class ArrayBuilder(val kind: PrimitiveType?) {
@@ -209,22 +215,42 @@ abstract class GenerateArrays(val writer: PrintWriter, val primitiveArrays: Bool
 
 
 class GenerateCommonArrays(writer: PrintWriter, primitiveArrays: Boolean) : GenerateArrays(writer, primitiveArrays) {
-    override fun FileBuilder.modifyGeneratedFile() {
-        import("kotlin.internal.ActualizeByJvmBuiltinProvider")
-    }
 
     override fun arrayBuilder(kind: PrimitiveType?): ArrayBuilder = object : ArrayBuilder(kind) {
         override fun ClassBuilder.modifyGeneratedClass() {
-            annotations += "ActualizeByJvmBuiltinProvider"
             expectActual = ExpectActualModifier.Expect
         }
     }
 }
 
 class GenerateJvmArrays(writer: PrintWriter, primitiveArrays: Boolean) : GenerateArrays(writer, primitiveArrays) {
+
+    override val fileAnnotations = listOf("kotlin.internal.BuiltinWithoutBytecode")
+
     override fun arrayBuilder(kind: PrimitiveType?): ArrayBuilder = object : ArrayBuilder(kind) {
         override fun ClassBuilder.modifyGeneratedClass() {
-            expectActual = ExpectActualModifier.Unspecified
+            expectActual = ExpectActualModifier.Actual
+        }
+
+        override fun MethodBuilder.modifyGetOperator() {
+            suppressNonAbstractFunctionWithoutBody()
+        }
+
+        override fun MethodBuilder.modifySetOperator() {
+            suppressNonAbstractFunctionWithoutBody()
+        }
+
+        override fun MethodBuilder.modifyIterator() {
+            suppressNonAbstractFunctionWithoutBody()
+        }
+
+        override fun PropertyBuilder.modifySizeProperty() {
+            suppressUninitializedNonAbstractProperty()
+        }
+
+        override fun SecondaryConstructorBuilder.modifySecondaryConstructor() {
+            annotations.clear()
+            suppressDiagnostics("WRONG_MODIFIER_TARGET", "PRIMARY_CONSTRUCTOR_DELEGATION_CALL_EXPECTED")
         }
     }
 }

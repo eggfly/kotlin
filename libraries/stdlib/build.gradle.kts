@@ -52,14 +52,7 @@ fun KotlinCommonCompilerOptions.mainCompilationOptions() {
     if (!kotlinBuildProperties.disableWerror) allWarningsAsErrors = true
 }
 
-val configurationBuiltins = resolvingConfiguration("builtins") {
-    attributes.attribute(LibraryElements.LIBRARY_ELEMENTS_ATTRIBUTE, project.objects.named(LibraryElements.JAR))
-}
-dependencies {
-    configurationBuiltins(project(":core:builtins"))
-}
-
-val jvmBuiltinsRelativeDir = "libraries/stdlib/jvm/builtins"
+val jvmBuiltinsRelativeDir = "libraries/stdlib/jvm/noBytecode/kotlin"
 val jvmBuiltinsDir = "${rootDir}/${jvmBuiltinsRelativeDir}"
 
 val jsDir = "${projectDir}/js"
@@ -135,6 +128,7 @@ kotlin {
                                 "-Xmultifile-parts-inherit",
                                 "-Xuse-14-inline-classes-mangling-scheme",
                                 "-Xno-new-java-annotation-targets",
+                                "-Xoutput-builtins-metadata",
                                 diagnosticNamesArg,
                             )
                         )
@@ -364,13 +358,14 @@ kotlin {
             kotlin.srcDir("jvm/compileOnly")
         }
         val jvmMain by getting {
-            project.configurations.getByName("jvmMainCompileOnly").extendsFrom(configurationBuiltins)
+            project.configurations.getByName("jvmMainCompileOnly")
             dependencies {
                 api("org.jetbrains:annotations:13.0")
             }
             val jvmSrcDirs = listOfNotNull(
                 "jvm/src",
                 "jvm/runtime",
+                "jvm/noBytecode",
             )
             project.sourceSets["main"].java.srcDirs(*jvmSrcDirs.toTypedArray())
             kotlin.setSrcDirs(jvmSrcDirs)
@@ -626,12 +621,10 @@ tasks {
         archiveAppendix.set("metadata")
     }
     val jvmJar by existing(Jar::class) {
-        dependsOn(configurationBuiltins)
         duplicatesStrategy = DuplicatesStrategy.FAIL
         archiveAppendix.set(null as String?)
         manifestAttributes(manifest, "Main", multiRelease = true)
         manifest.attributes(mapOf("Implementation-Title" to "kotlin-stdlib"))
-        from { zipTree(configurationBuiltins.singleFile) }
         from(kotlin.jvm().compilations["mainJdk7"].output.allOutputs)
         from(kotlin.jvm().compilations["mainJdk8"].output.allOutputs)
         from(project.sourceSets["java9"].output)
@@ -641,9 +634,6 @@ tasks {
         duplicatesStrategy = DuplicatesStrategy.FAIL
         archiveAppendix.set(null as String?)
         into("jvmMain") {
-            from(jvmBuiltinsDir) {
-                into("kotlin")
-            }
             from(kotlin.sourceSets["jvmMainJdk7"].kotlin) {
                 into("jdk7")
             }

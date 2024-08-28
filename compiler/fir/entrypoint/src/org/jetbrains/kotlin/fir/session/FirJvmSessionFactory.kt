@@ -16,9 +16,9 @@ import org.jetbrains.kotlin.fir.java.FirJvmTargetProvider
 import org.jetbrains.kotlin.fir.java.FirProjectSessionProvider
 import org.jetbrains.kotlin.fir.java.JavaSymbolProvider
 import org.jetbrains.kotlin.fir.java.deserialization.FirJvmBuiltinsSymbolProvider
+import org.jetbrains.kotlin.fir.java.deserialization.FirJvmClasspathBuiltinSymbolProvider
 import org.jetbrains.kotlin.fir.java.deserialization.JvmClassFileBasedSymbolProvider
 import org.jetbrains.kotlin.fir.java.deserialization.OptionalAnnotationClassesProvider
-import org.jetbrains.kotlin.fir.resolve.FirJvmActualizingBuiltinSymbolProvider
 import org.jetbrains.kotlin.fir.resolve.providers.FirSymbolProvider
 import org.jetbrains.kotlin.fir.resolve.providers.impl.*
 import org.jetbrains.kotlin.fir.resolve.scopes.wrapScopeWithJvmMapped
@@ -137,7 +137,7 @@ object FirJvmSessionFactory : FirAbstractSessionFactory<FirJvmSessionFactory.Lib
                     *(incrementalCompilationSymbolProviders?.previousFirSessionsSymbolProviders?.toTypedArray() ?: emptyArray()),
                     incrementalCompilationSymbolProviders?.symbolProviderForBinariesFromIncrementalCompilation,
                     javaSymbolProvider,
-                    initializeForStdlibIfNeeded(projectEnvironment, session, kotlinScopeProvider, dependencies),
+                    initializeForStdlibIfNeeded(projectEnvironment, session, kotlinScopeProvider),
                     *dependencies.toTypedArray(),
                     incrementalCompilationSymbolProviders?.optionalAnnotationClassesProviderForBinariesFromIncrementalCompilation,
                 )
@@ -153,10 +153,16 @@ object FirJvmSessionFactory : FirAbstractSessionFactory<FirJvmSessionFactory.Lib
         moduleData: FirModuleData,
         languageVersionSettings: LanguageVersionSettings,
     ): FirKotlinScopeProvider {
-        return if (languageVersionSettings.getFlag(AnalysisFlags.stdlibCompilation) && moduleData.isCommon) {
-            FirKotlinScopeProvider()
-        } else {
-            FirKotlinScopeProvider(::wrapScopeWithJvmMapped)
+        if (languageVersionSettings.getFlag(AnalysisFlags.stdlibCompilation) && moduleData.isCommon) return FirKotlinScopeProvider()
+        return FirKotlinScopeProvider { klass, declaredScope, useSiteSession, scopeSession, memberRequiredPhase ->
+            wrapScopeWithJvmMapped(
+                klass,
+                declaredScope,
+                useSiteSession,
+                scopeSession,
+                memberRequiredPhase,
+                filterOutJvmPlatformDeclarations = !languageVersionSettings.getFlag(AnalysisFlags.stdlibCompilation)
+            )
         }
     }
 
@@ -189,17 +195,17 @@ object FirJvmSessionFactory : FirAbstractSessionFactory<FirJvmSessionFactory.Lib
         projectEnvironment: AbstractProjectEnvironment,
         session: FirSession,
         kotlinScopeProvider: FirKotlinScopeProvider,
-        dependencies: List<FirSymbolProvider>,
     ): FirSymbolProvider? {
         return runIf(session.languageVersionSettings.getFlag(AnalysisFlags.stdlibCompilation) && !session.moduleData.isCommon) {
             val kotlinClassFinder = projectEnvironment.getKotlinClassFinder(projectEnvironment.getSearchScopeForProjectLibraries())
-            val builtinsSymbolProvider = initializeBuiltinsProvider(session, session.moduleData, kotlinScopeProvider, kotlinClassFinder)
             if (session.moduleData.dependsOnDependencies.isNotEmpty()) {
-                val refinedSourceSymbolProviders = dependencies.filter { it.session.kind == FirSession.Kind.Source }
-                FirJvmActualizingBuiltinSymbolProvider(builtinsSymbolProvider, refinedSourceSymbolProviders)
+                null
             } else {
-                // `FirBuiltinsSymbolProvider` is needed anyway for jvm-only modules that don't have common dependencies (jdk7, jdk8)
-                builtinsSymbolProvider
+                FirJvmClasspathBuiltinSymbolProvider(
+                    session,
+                    session.moduleData,
+                    kotlinScopeProvider
+                ) { kotlinClassFinder.findBuiltInsData(it) }
             }
         }
     }

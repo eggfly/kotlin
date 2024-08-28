@@ -28,6 +28,7 @@ import org.jetbrains.kotlin.fir.java.syntheticPropertiesStorage
 import org.jetbrains.kotlin.fir.java.toConeKotlinTypeProbablyFlexible
 import org.jetbrains.kotlin.fir.resolve.ScopeSession
 import org.jetbrains.kotlin.fir.resolve.defaultType
+import org.jetbrains.kotlin.fir.resolve.providers.firProvider
 import org.jetbrains.kotlin.fir.resolve.toSymbol
 import org.jetbrains.kotlin.fir.scopes.*
 import org.jetbrains.kotlin.fir.scopes.impl.AbstractFirUseSiteMemberScope
@@ -982,8 +983,17 @@ class JavaClassUseSiteMemberScope(
             this is FirJavaClass -> superConeTypes.any { type ->
                 type.toFir(session)?.hasKotlinSuper(session, visited) == true
             }
+            // TODO do we still need `origin.isBuiltIns` check?
             isInterface || origin.isBuiltIns -> false
-            else -> true
+            else -> {
+                val containingFile = session.firProvider.getFirClassifierContainerFileIfAny(symbol)
+                if (containingFile == null) {
+                    true
+                } else {
+                    !containingFile.hasAnnotation(StandardClassIds.Annotations.BuiltinWithoutBytecode, session)
+                            && !containingFile.hasAnnotation(StandardClassIds.Annotations.BuiltinWithBytecode, session)
+                }
+            }
         }
 
     private fun ConeClassLikeType.toFir(session: FirSession): FirRegularClass? {

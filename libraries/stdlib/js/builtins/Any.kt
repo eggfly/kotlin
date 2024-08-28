@@ -3,13 +3,21 @@
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
-package kotlin
+@file:kotlin.internal.BuiltinWithoutBytecode
+@file:Suppress(
+    "NON_ABSTRACT_FUNCTION_WITH_NO_BODY",
+    "MUST_BE_INITIALIZED_OR_BE_ABSTRACT",
+    "EXTERNAL_TYPE_EXTENDS_NON_EXTERNAL_TYPE",
+    "PRIMARY_CONSTRUCTOR_DELEGATION_CALL_EXPECTED",
+    "WRONG_MODIFIER_TARGET",
+    "UNUSED_PARAMETER")
 
+package kotlin
 
 /**
  * The root of the Kotlin class hierarchy. Every Kotlin class has [Any] as a superclass.
  */
-public expect open class Any() {
+public actual open class Any {
     /**
      * Indicates whether some other object is "equal to" this one. Implementations must fulfil the following
      * requirements:
@@ -22,7 +30,7 @@ public expect open class Any() {
      *
      * Read more about [equality](https://kotlinlang.org/docs/reference/equality.html) in Kotlin.
      */
-    public open operator fun equals(other: Any?): Boolean
+    public actual open operator fun equals(other: Any?): Boolean
 
     /**
      * Returns a hash code value for the object.  The general contract of `hashCode` is:
@@ -30,10 +38,10 @@ public expect open class Any() {
      * * Whenever it is invoked on the same object more than once, the `hashCode` method must consistently return the same integer, provided no information used in `equals` comparisons on the object is modified.
      * * If two objects are equal according to the `equals()` method, then calling the `hashCode` method on each of the two objects must produce the same integer result.
      */
-    public open fun hashCode(): Int
+    public actual open fun hashCode(): Int
 
     /**
      * Returns a string representation of the object.
      */
-    public open fun toString(): String
+    public actual open fun toString(): String
 }

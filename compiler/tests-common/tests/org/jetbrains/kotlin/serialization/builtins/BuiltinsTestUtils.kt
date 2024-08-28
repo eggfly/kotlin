@@ -19,11 +19,18 @@ object BuiltinsTestUtils {
     fun compileBuiltinsModule(environment: KotlinCoreEnvironment): ModuleDescriptor {
         val files = KotlinTestUtils.loadToKtFiles(
             environment, ContainerUtil.concat<File>(
-                allFilesUnder("libraries/stdlib/jvm/builtins"),
-                allFilesUnder("core/builtins/build/src/common"),
-                allFilesUnder("core/builtins/build/src/reflect"),
+                allFilesUnder("libraries/stdlib/jvm/"),
+                allFilesUnder("libraries/stdlib/src/")
             )
         )
+            .filter {
+                it.annotationEntries.any { annotation ->
+                    annotation.shortName?.asString() in listOf(
+                        "BuiltinWithBytecode",
+                        "BuiltinWithoutBytecode"
+                    )
+                }
+            }
         return createResolveSessionForFiles(environment.project, files, false).moduleDescriptor
     }
 
