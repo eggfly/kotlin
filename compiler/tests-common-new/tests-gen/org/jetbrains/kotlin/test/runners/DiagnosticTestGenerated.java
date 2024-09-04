@@ -44969,6 +44969,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
       }
 
       @Test
+      @TestMetadata("ExhaustiveSeparate.kt")
+      public void testExhaustiveSeparate() {
+        runTest("compiler/testData/diagnostics/tests/when/ExhaustiveSeparate.kt");
+      }
+
+      @Test
       @TestMetadata("ExhaustiveSmartcastBoolean.kt")
       public void testExhaustiveSmartcastBoolean() {
         runTest("compiler/testData/diagnostics/tests/when/ExhaustiveSmartcastBoolean.kt");
