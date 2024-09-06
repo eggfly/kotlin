@@ -182,6 +182,31 @@ abstract class FirDataFlowAnalyzer(
         return variable.getStability(flow, typeStatement.types) to typeStatement
     }
 
+    fun getStableSubexpressions(expressions: List<FirExpression>): List<FirExpression> {
+        val flow = currentSmartCastPosition ?: return emptyList()
+        val subexpressions = mutableMapOf<RealVariable, FirExpression>()
+
+        fun FirExpression.go() {
+            val variable = flow.getRealVariableWithoutUnwrappingAlias(this)
+            if (variable != null && variable.getStability(flow, components.session) == SmartcastStability.STABLE_VALUE) {
+                subexpressions[variable] = this
+            }
+            // traverse subexpressions which may be useful
+            when (this) {
+                is FirBooleanOperatorExpression -> {
+                    leftOperand.go()
+                    rightOperand.go()
+                }
+                is FirCall -> argumentList.arguments.forEach { it.go() }
+            }
+        }
+
+        // execute over each expression
+        expressions.forEach { it.go() }
+
+        return subexpressions.toList().map { it.second }
+    }
+
     fun returnExpressionsOfAnonymousFunctionOrNull(function: FirAnonymousFunction): Collection<FirAnonymousFunctionReturnExpressionInfo>? =
         graphBuilder.returnExpressionsOfAnonymousFunction(function)
 
