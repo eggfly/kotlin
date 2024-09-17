@@ -476,9 +476,11 @@ internal class BridgeLowering(val context: JvmBackendContext) : ClassLoweringPas
 
             body = context.createIrBuilder(symbol, startOffset, endOffset).irBlockBody {
                 specialBridge.methodInfo?.let { info ->
-                    valueParameters.take(info.argumentsToCheck).forEach {
-                        +parameterTypeCheck(it, target.valueParameters[it.index].type, info.defaultValueGenerator(this@apply))
-                    }
+                    nonDispatchParameters
+                        .take(info.argumentsToCheck)
+                        .forEach {
+                            +parameterTypeCheck(it, target.parameters[it.indexNew].type, info.defaultValueGenerator(this@apply))
+                        }
                 }
                 +irReturn(delegatingCall(this@apply, target, specialBridge.superQualifierSymbol))
             }
@@ -488,7 +490,7 @@ internal class BridgeLowering(val context: JvmBackendContext) : ClassLoweringPas
             }
 
             if (MethodSignatureMapper.shouldBoxSingleValueParameterForSpecialCaseOfRemove(this)) {
-                valueParameters.last().let {
+                parameters.last().let {
                     it.type = it.type.makeNullable()
                 }
             }
@@ -502,7 +504,7 @@ internal class BridgeLowering(val context: JvmBackendContext) : ClassLoweringPas
         // If there is an existing function that would conflict with a special bridge signature, insert the special bridge
         // code directly as a prelude in the existing method.
         if (specialOverrideSignature == ourSignature) {
-            val argumentsToCheck = valueParameters.take(specialOverrideInfo.argumentsToCheck)
+            val argumentsToCheck = nonDispatchParameters.take(specialOverrideInfo.argumentsToCheck)
             val shouldGenerateParameterChecks = argumentsToCheck.any { !it.type.isNullable() }
             if (shouldGenerateParameterChecks) {
                 // Rewrite the body to check if arguments have wrong type. If so, return the default value, otherwise,
@@ -550,21 +552,19 @@ internal class BridgeLowering(val context: JvmBackendContext) : ClassLoweringPas
     private fun IrSimpleFunction.copyParametersWithErasure(
         irClass: IrClass,
         from: IrSimpleFunction,
-        substitutedParameterTypes: List<IrType>? = null
+        substitutedParameterTypes: List<IrType>? = null,
     ) {
         val visibleTypeParameters = collectVisibleTypeParameters(this)
-        // This is a workaround for a bug affecting fake overrides. Sometimes we encounter fake overrides
-        // with dispatch receivers pointing at a superclass instead of the current class.
-        dispatchReceiverParameter = irClass.thisReceiver?.copyTo(this, type = irClass.defaultType)
-        extensionReceiverParameter = from.extensionReceiverParameter?.copyWithTypeErasure(this, visibleTypeParameters)
-        valueParameters = if (substitutedParameterTypes != null) {
-            from.valueParameters.zip(substitutedParameterTypes).map { (param, type) ->
-                param.copyWithTypeErasure(this, visibleTypeParameters, type)
+        parameters = from.parameters.map { param ->
+            if (param.kind == IrParameterKind.DispatchReceiver) {
+                // This is a workaround for a bug affecting fake overrides. Sometimes we encounter fake overrides
+                // with dispatch receivers pointing at a superclass instead of the current class.
+                irClass.thisReceiver!!.copyTo(this, type = irClass.defaultType, kind = IrParameterKind.DispatchReceiver)
+            } else {
+                val newType = substitutedParameterTypes?.get(param.indexNew)
+                param.copyWithTypeErasure(this, visibleTypeParameters, newType)
             }
-        } else {
-            from.valueParameters.map { it.copyWithTypeErasure(this, visibleTypeParameters) }
         }
-        contextReceiverParametersCount = from.contextReceiverParametersCount
     }
 
     private fun IrValueParameter.copyWithTypeErasure(
