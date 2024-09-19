@@ -421,6 +421,7 @@ kotlin {
                 val unimplementedNativeBuiltIns =
                     (file(jvmBuiltinsDir).list()!!.toSortedSet() - file("$jsDir/builtins/").list()!!)
                         .map { "$jvmBuiltinsRelativeDir/$it" }
+                        .filterNot { it == "$jvmBuiltinsRelativeDir/Atomics.jvm.kt" || it == "$jvmBuiltinsRelativeDir/AtomicArrays.jvm.kt" }
 
                 val sources = unimplementedNativeBuiltIns
 
@@ -485,7 +486,7 @@ kotlin {
 
                 val excluded = listOf(
                     // Included with K/N collections
-                    "Collections.kt", "Iterator.kt"
+                    "Collections.kt", "Iterator.kt", "Atomics.jvm.kt", "AtomicArrays.jvm.kt"
                 )
 
                 sources.forEach { path ->
