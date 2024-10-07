@@ -322,6 +322,9 @@ private class KaFirKotlinPropertyKtPropertyBasedSymbol : KaFirKotlinPropertySymb
                 firSymbol.fir.fromPrimaryConstructor == true
         }
 
+    override val isExternal: Boolean
+        get() = withValidityAssertion { firSymbol.isExternal }
+
     // NB: `field` in accessors indicates the property should have a backing field. To see that, though, we need BODY_RESOLVE.
     override val hasBackingField: Boolean
         get() = withValidityAssertion { firSymbol.hasBackingField }
@@ -429,6 +432,8 @@ private class KaFirKotlinPropertyKtParameterBasedSymbol : KaFirKotlinPropertySym
 
     override val isFromPrimaryConstructor: Boolean
         get() = withValidityAssertion { true }
+    override val isExternal: Boolean
+        get() = withValidityAssertion { firSymbol.isExternal }
 
     override val hasBackingField: Boolean
         get() = withValidityAssertion { true }
@@ -520,6 +525,8 @@ private class KaFirKotlinPropertyKtDestructuringDeclarationEntryBasedSymbol : Ka
 
     override val isFromPrimaryConstructor: Boolean
         get() = withValidityAssertion { false }
+    override val isExternal: Boolean
+        get() = withValidityAssertion { firSymbol.isExternal }
 
     /** KT-70766 */
     override val hasBackingField: Boolean
