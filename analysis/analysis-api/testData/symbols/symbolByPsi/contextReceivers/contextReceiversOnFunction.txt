@@ -44,5 +44,6 @@ KaNamedFunctionSymbol:
   visibility: PUBLIC
   getContainingFileSymbol: KaFileSymbol(contextReceiversOnFunction.kt)
   getContainingJvmClassName: ContextReceiversOnFunctionKt
+  canBeAnOperator: false
   getContainingModule: KaSourceModule "Sources of main"
   deprecationStatus: null

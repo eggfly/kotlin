@@ -54,5 +54,6 @@ KaNamedFunctionSymbol:
   visibility: PUBLIC
   getContainingFileSymbol: KaFileSymbol(extensionFunction.kt)
   getContainingJvmClassName: ExtensionFunctionKt
+  canBeAnOperator: false
   getContainingModule: KaSourceModule "Sources of main"
   deprecationStatus: null

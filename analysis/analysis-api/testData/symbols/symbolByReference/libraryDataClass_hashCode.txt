@@ -35,5 +35,6 @@ KaNamedFunctionSymbol:
     type: one/DataClass
   getContainingFileSymbol: null
   getContainingJvmClassName: one.DataClass
+  canBeAnOperator: false
   getContainingModule: KaLibraryModule "Library lib"
   deprecationStatus: null

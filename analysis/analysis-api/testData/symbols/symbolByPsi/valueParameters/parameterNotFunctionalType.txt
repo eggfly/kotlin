@@ -100,5 +100,6 @@ KaNamedFunctionSymbol:
   visibility: PUBLIC
   getContainingFileSymbol: KaFileSymbol(parameterNotFunctionalType.kt)
   getContainingJvmClassName: ParameterNotFunctionalTypeKt
+  canBeAnOperator: false
   getContainingModule: KaSourceModule "Sources of main"
   deprecationStatus: null

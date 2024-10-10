@@ -93,5 +93,6 @@ KaNamedFunctionSymbol:
   visibility: PUBLIC
   getContainingFileSymbol: KaFileSymbol(invalidContractParameterPassedToReturns.kt)
   getContainingJvmClassName: InvalidContractParameterPassedToReturnsKt
+  canBeAnOperator: false
   getContainingModule: KaSourceModule "Sources of main"
   deprecationStatus: null

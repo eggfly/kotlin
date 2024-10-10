@@ -85,6 +85,10 @@ public class DebugSymbolRenderer(
                     renderComputedValue("getContainingJvmClassName", printer, currentSymbolStack) { symbol.containingJvmClassName }
                 }
 
+                if (symbol is KaNamedFunctionSymbol) {
+                    renderComputedValue("canBeAnOperator", printer, currentSymbolStack) { symbol.canBeAnOperator() }
+                }
+
                 renderComputedValue("getContainingModule", printer, currentSymbolStack) { symbol.containingModule }
 
                 if (symbol is KaClassSymbol) {

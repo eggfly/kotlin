@@ -109,5 +109,6 @@ KaNamedFunctionSymbol:
   visibility: PUBLIC
   getContainingFileSymbol: KaFileSymbol(callsInPlaceAtMostOnceContract.kt)
   getContainingJvmClassName: CallsInPlaceAtMostOnceContractKt
+  canBeAnOperator: false
   getContainingModule: KaSourceModule "Sources of main"
   deprecationStatus: null

@@ -62,5 +62,6 @@ KaNamedFunctionSymbol:
     type: dynamic
   getContainingFileSymbol: null
   getContainingJvmClassName: null
+  canBeAnOperator: false
   getContainingModule: KaSourceModule "Sources of main"
   deprecationStatus: null

@@ -38,5 +38,6 @@ KaNamedFunctionSymbol:
   visibility: PUBLIC
   getContainingFileSymbol: KaFileSymbol(typeAnnotationsWithTypeAlias.kt)
   getContainingJvmClassName: TypeAnnotationsWithTypeAliasKt
+  canBeAnOperator: false
   getContainingModule: KaSourceModule "Sources of main"
   deprecationStatus: null

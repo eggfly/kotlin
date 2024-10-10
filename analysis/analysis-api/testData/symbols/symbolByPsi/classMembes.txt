@@ -135,6 +135,7 @@ KaNamedFunctionSymbol:
     type: A
   getContainingFileSymbol: KaFileSymbol(classMembes.kt)
   getContainingJvmClassName: A
+  canBeAnOperator: false
   getContainingModule: KaSourceModule "Sources of main"
   deprecationStatus: null
 

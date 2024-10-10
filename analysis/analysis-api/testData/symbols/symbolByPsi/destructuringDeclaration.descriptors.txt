@@ -392,5 +392,6 @@ KaNamedFunctionSymbol:
   visibility: PUBLIC
   getContainingFileSymbol: KaFileSymbol(destructuringDeclaration.kt)
   getContainingJvmClassName: DestructuringDeclarationKt
+  canBeAnOperator: false
   getContainingModule: KaSourceModule "Sources of main"
   deprecationStatus: null

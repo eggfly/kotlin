@@ -35,6 +35,7 @@ KaNamedFunctionSymbol:
     type: JavaClass
   getContainingFileSymbol: null
   getContainingJvmClassName: JavaClass
+  canBeAnOperator: false
   getContainingModule: KaSourceModule "Sources of main"
   deprecationStatus: null
 
@@ -106,6 +107,7 @@ KaNamedFunctionSymbol:
     type: JavaClass
   getContainingFileSymbol: null
   getContainingJvmClassName: JavaClass
+  canBeAnOperator: false
   getContainingModule: KaSourceModule "Sources of main"
   deprecationStatus: null
 
@@ -149,6 +151,7 @@ KaNamedFunctionSymbol:
     type: SuperClass
   getContainingFileSymbol: null
   getContainingJvmClassName: SuperClass
+  canBeAnOperator: false
   getContainingModule: KaSourceModule "Sources of main"
   deprecationStatus: null
 
@@ -219,6 +222,7 @@ KaNamedFunctionSymbol:
     type: kotlin/Any
   getContainingFileSymbol: null
   getContainingJvmClassName: kotlin.Any
+  canBeAnOperator: true
   getContainingModule: KaBuiltinsModule "Builtins for JVM (1.8)"
   deprecationStatus: null
 
@@ -259,6 +263,7 @@ KaNamedFunctionSymbol:
     type: kotlin/Any
   getContainingFileSymbol: null
   getContainingJvmClassName: kotlin.Any
+  canBeAnOperator: false
   getContainingModule: KaBuiltinsModule "Builtins for JVM (1.8)"
   deprecationStatus: null
 
@@ -299,6 +304,7 @@ KaNamedFunctionSymbol:
     type: kotlin/Any
   getContainingFileSymbol: null
   getContainingJvmClassName: kotlin.Any
+  canBeAnOperator: false
   getContainingModule: KaBuiltinsModule "Builtins for JVM (1.8)"
   deprecationStatus: null
 
