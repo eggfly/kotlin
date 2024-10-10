@@ -43,9 +43,9 @@ internal abstract class IrConstAnnotationTransformer(
 
     private fun transformAnnotation(annotation: IrConstructorCall) {
         if (annotation.type is IrErrorType) return
-        for (i in 0 until annotation.valueArgumentsCount) {
-            val arg = annotation.getValueArgument(i) ?: continue
-            annotation.putValueArgument(i, transformAnnotationArgument(arg, annotation.symbol.owner.valueParameters[i]))
+        annotation.arguments.forEachIndexed { i, arg ->
+            arg ?: return@forEachIndexed
+            annotation.arguments[i] = transformAnnotationArgument(arg, annotation.symbol.owner.valueParameters[i])
         }
         annotation.saveInConstTracker()
     }
