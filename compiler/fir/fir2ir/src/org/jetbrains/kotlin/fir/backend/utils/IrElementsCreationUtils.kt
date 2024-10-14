@@ -21,8 +21,8 @@ import org.jetbrains.kotlin.fir.extensions.declarationGenerators
 import org.jetbrains.kotlin.fir.extensions.extensionService
 import org.jetbrains.kotlin.fir.extensions.generatedDeclarationsSymbolProvider
 import org.jetbrains.kotlin.fir.resolve.providers.FirSymbolProvider
+import org.jetbrains.kotlin.fir.resolve.providers.impl.FirBuiltinSyntheticFunctionInterfaceProvider
 import org.jetbrains.kotlin.fir.resolve.providers.impl.FirCachingCompositeSymbolProvider
-import org.jetbrains.kotlin.fir.resolve.providers.impl.FirStdlibBuiltinSyntheticFunctionInterfaceProvider
 import org.jetbrains.kotlin.fir.resolve.providers.symbolProvider
 import org.jetbrains.kotlin.ir.declarations.IrDeclarationOrigin
 import org.jetbrains.kotlin.ir.declarations.IrDeclarationParent
@@ -155,7 +155,7 @@ fun FirSession.createFilesWithBuiltinsSyntheticDeclarationsIfNeeded(): List<FirF
         return emptyList()
     }
     val symbolProvider =
-        (symbolProvider as FirCachingCompositeSymbolProvider).providers.filterIsInstance<FirStdlibBuiltinSyntheticFunctionInterfaceProvider>()
+        (symbolProvider as FirCachingCompositeSymbolProvider).providers.filterIsInstance<FirBuiltinSyntheticFunctionInterfaceProvider>()
             .single()
 
     return createSyntheticFiles(
@@ -163,7 +163,7 @@ fun FirSession.createFilesWithBuiltinsSyntheticDeclarationsIfNeeded(): List<FirF
         generatedBuiltinsDeclarationsFileName,
         FirDeclarationOrigin.Synthetic.Builtins,
         symbolProvider,
-        topLevelClasses = symbolProvider.generatedClasses.map { it.classId }.groupBy { it.packageFqName },
+        topLevelClasses = symbolProvider.generatedClassIds.groupBy { it.packageFqName },
         topLevelCallables = emptyMap(),
     )
 }
