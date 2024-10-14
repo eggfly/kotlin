@@ -10,7 +10,7 @@ package org.jetbrains.kotlin.project.model
 /**
  * Represents most common Kotlin compilation settings for an entity.
  *
- * **Note**: This interface is soft-deprecated.
+ * **Note**: This interface will be deprecated in the future.
  * Instead, better to use existing `compilerOptions` DSL.
  *
  * See also [Compiler options DSL documentation](https://kotlinlang.org/docs/gradle-compiler-options.html).

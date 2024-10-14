@@ -10,8 +10,10 @@ import org.jetbrains.kotlin.project.model.LanguageSettings
 /**
  * Provides the DSL to configure [LanguageSettings] for a [KotlinSourceSet] entity.
  *
- * **Note**: This interface is soft-deprecated.
+ * **Note**: This interface will be deprecated in the future.
  * Instead, it is better to use the existing `compilerOptions` DSL.
+ *
+ * See also [Compiler options DSL documentation](https://kotlinlang.org/docs/gradle-compiler-options.html).
  */
 interface LanguageSettingsBuilder : LanguageSettings {
     override var languageVersion: String?
