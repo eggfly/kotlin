@@ -48,4 +48,11 @@ public abstract class Enum<E : Enum<E>>(name: String, ordinal: Int): Comparable<
      * @throws IllegalArgumentException if this enum type has no constant with the specified name
      * @valueOf
      */
+
+    /**
+     * Returns a representation of an immutable list of all enum entries, in the order they're declared.
+     *
+     * This method may be used to iterate over the enum entries.
+     * @entries
+     */
 }
