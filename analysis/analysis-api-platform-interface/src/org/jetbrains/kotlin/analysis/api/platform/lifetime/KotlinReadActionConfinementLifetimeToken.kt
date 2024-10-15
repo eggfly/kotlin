@@ -35,7 +35,9 @@ public class KotlinReadActionConfinementLifetimeToken(
     override fun getInvalidationReason(): String {
         if (onCreatedTimeStamp != modificationTracker.modificationCount) {
             return if (modificationTracker is ModificationTrackerWithInvalidationReason) {
-                "Session is invalidated: ${modificationTracker.getInvalidationReason()}"
+                val trackerInvalidationReason = modificationTracker.getInvalidationReason()
+                    ?: error("Cannot get an invalidation reason for a ${ModificationTrackerWithInvalidationReason::class.simpleName} that's valid'")
+                "Session is invalidated: $trackerInvalidationReason"
             } else {
                 "Session is invalidated"
             }

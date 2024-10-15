@@ -122,10 +122,13 @@ private class LLFirSessionValidityModificationTracker(private val sessionRef: We
         return COUNT_UPDATER.incrementAndGet(this)
     }
 
-    override fun getInvalidationReason(): String {
-        val session = sessionRef.get() ?: return "`${LLFirSession::class.simpleName}` is garbage collected"
-        if (!session.isValid) "`${session::class.simpleName}` for `${session.ktModule::class.java}` is invalid"
-        return "Tracker is valid"
+    override fun getInvalidationReason(): String? {
+        val session = sessionRef.get()
+            ?: return "`${LLFirSession::class.simpleName}` is garbage collected"
+        if (!session.isValid) {
+            return "`${session::class.simpleName}` for `${session.ktModule::class.java}` is invalid"
+        }
+        return null
     }
 
     companion object {
