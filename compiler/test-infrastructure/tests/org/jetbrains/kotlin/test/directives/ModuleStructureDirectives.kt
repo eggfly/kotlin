@@ -39,10 +39,10 @@ object ModuleStructureDirectives : SimpleDirectivesContainer() {
         """.trimIndent()
     )
 
-    val SNIPPET by stringDirective(
+    val SNIPPET by directive(
         """
-            Usage: // SNIPPET[: number]
-            Declares snippet with specified or auto-incremented number
+            Usage: // SNIPPET
+            Declares (next) snippet with auto-incremented number
         """.trimIndent()
     )
 
