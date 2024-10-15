@@ -1,3 +1,4 @@
+// RUN_PIPELINE_TILL: SOURCE
 // LANGUAGE: -ForbidInferringTypeVariablesIntoEmptyIntersection
 // RENDER_DIAGNOSTICS_FULL_TEXT
 open class Foo

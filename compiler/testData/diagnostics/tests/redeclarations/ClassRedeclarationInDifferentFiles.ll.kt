@@ -1,3 +1,4 @@
+// RUN_PIPELINE_TILL: SOURCE
 // LL_FIR_DIVERGENCE
 // The compiler reports `CLASSIFIER_REDECLARATION` on both `A`s, but the LL FIR APIs output is also workable. The underlying
 // issue is already reported: KTIJ-23371.

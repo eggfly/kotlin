@@ -1,3 +1,4 @@
+// RUN_PIPELINE_TILL: SOURCE
 // LL_FIR_DIVERGENCE
 // Different syntax errors
 // LL_FIR_DIVERGENCE

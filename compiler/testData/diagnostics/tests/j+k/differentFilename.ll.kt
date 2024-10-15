@@ -1,3 +1,4 @@
+// RUN_PIPELINE_TILL: SOURCE
 // LL_FIR_DIVERGENCE
 // two possible reasons:
 // 1) LL FIR doesn't suffer from KT-4455 like standard Kotlin compiler does

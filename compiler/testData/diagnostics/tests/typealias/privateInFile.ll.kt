@@ -1,3 +1,4 @@
+// RUN_PIPELINE_TILL: SOURCE
 // LL_FIR_DIVERGENCE
 // Which file `INVISIBLE_REFERENCE` is reported in is unspecified behavior. LL FIR does worse than the compiler in that it doesn't report
 // `PACKAGE_OR_CLASSIFIER_REDECLARATION` on either instance of `C` and `TA`, but this is a separate issue: KTIJ-23371.
