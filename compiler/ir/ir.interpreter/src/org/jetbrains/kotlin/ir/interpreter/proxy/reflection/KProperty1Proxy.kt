@@ -5,6 +5,7 @@
 
 package org.jetbrains.kotlin.ir.interpreter.proxy.reflection
 
+import org.jetbrains.kotlin.ir.declarations.IrParameterKind
 import org.jetbrains.kotlin.ir.declarations.IrValueParameter
 import org.jetbrains.kotlin.ir.interpreter.CallInterceptor
 import org.jetbrains.kotlin.ir.interpreter.state.reflection.KPropertyState
@@ -32,7 +33,7 @@ internal open class KProperty1Proxy(
 
             override fun call(vararg args: Any?): Any? {
                 checkArguments(1, args.size)
-                val receiverParameter = (getter.dispatchReceiverParameter ?: getter.extensionReceiverParameter)!!
+                val receiverParameter = getter.parameters.single { it.kind == IrParameterKind.DispatchReceiver || it.kind == IrParameterKind.ExtensionReceiver }
                 val receiver = environment.convertToState(args[0], receiverParameter.getActualType())
                 return callInterceptor.interceptProxy(getter, listOf(receiver))
             }
@@ -60,7 +61,7 @@ internal class KMutableProperty1Proxy(
 
             override fun call(vararg args: Any?) {
                 checkArguments(2, args.size)
-                val receiverParameter = (setter.dispatchReceiverParameter ?: setter.extensionReceiverParameter)!!
+                val receiverParameter = setter.parameters.single { it.kind == IrParameterKind.DispatchReceiver || it.kind == IrParameterKind.ExtensionReceiver }
                 val receiver = environment.convertToState(args[0], receiverParameter.getActualType())
                 val valueParameter = setter.valueParameters.single()
                 val value = environment.convertToState(args[1], valueParameter.getActualType())

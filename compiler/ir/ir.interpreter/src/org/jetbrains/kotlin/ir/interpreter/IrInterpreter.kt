@@ -138,7 +138,7 @@ class IrInterpreter(internal val environment: IrInterpreterEnvironment, internal
 
     private fun interpretValueParameter(valueParameter: IrValueParameter) {
         val irFunction = valueParameter.parent as IrFunction
-        fun isReceiver() = irFunction.dispatchReceiverParameter == valueParameter || irFunction.extensionReceiverParameter == valueParameter
+        fun isReceiver() = valueParameter.kind != IrParameterKind.RegularParameter
 
         val state = callStack.popState()
 

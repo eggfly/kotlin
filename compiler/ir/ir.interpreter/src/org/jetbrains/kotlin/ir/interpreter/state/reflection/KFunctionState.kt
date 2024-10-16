@@ -146,13 +146,15 @@ internal class KFunctionState(
     fun getParameters(callInterceptor: CallInterceptor): List<KParameter> {
         if (_parameters != null) return _parameters!!
         val kParameterIrClass = callInterceptor.environment.kParameterClass.owner
-        var index = 0
-        val instanceParameter = irFunction.dispatchReceiverParameter
-            ?.let { KParameterProxy(KParameterState(kParameterIrClass, it, index++, KParameter.Kind.INSTANCE), callInterceptor) }
-        val extensionParameter = irFunction.extensionReceiverParameter
-            ?.let { KParameterProxy(KParameterState(kParameterIrClass, it, index++, KParameter.Kind.EXTENSION_RECEIVER), callInterceptor) }
-        _parameters = listOfNotNull(instanceParameter, extensionParameter) +
-                irFunction.valueParameters.map { KParameterProxy(KParameterState(kParameterIrClass, it, index++), callInterceptor) }
+        _parameters = irFunction.parameters.map {
+            val kind = when (it.kind) {
+                IrParameterKind.DispatchReceiver -> KParameter.Kind.INSTANCE
+                IrParameterKind.ContextParameter -> KParameter.Kind.VALUE
+                IrParameterKind.ExtensionReceiver -> KParameter.Kind.EXTENSION_RECEIVER
+                IrParameterKind.RegularParameter -> KParameter.Kind.VALUE
+            }
+            KParameterProxy(KParameterState(kParameterIrClass, it, it.indexNew, kind), callInterceptor)
+        }
         return _parameters!!
     }
 
