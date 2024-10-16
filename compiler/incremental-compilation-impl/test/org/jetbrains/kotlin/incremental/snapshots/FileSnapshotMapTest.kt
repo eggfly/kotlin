@@ -23,7 +23,7 @@ class FileSnapshotMapTest : TestWithWorkingDir() {
         super.setUp()
         val caches = File(workingDir, "caches").apply { mkdirs() }
         val snapshotMapFile = File(caches, "snapshots.tab")
-        val pathConverter = RelocatableFileToPathConverter((workingDir.normalize().absoluteFile))
+        val pathConverter = RelocatableFileToPathConverter((workingDir.absoluteFile))
         val icContext = IncrementalCompilationContext(
             pathConverterForSourceFiles = pathConverter
         )
@@ -77,7 +77,7 @@ class FileSnapshotMapTest : TestWithWorkingDir() {
     }
 
     private fun Iterable<File>.toSortedPaths(): Array<String> =
-        map { it.normalize().absolutePath }.sorted().toTypedArray()
+        map { it.absolutePath }.sorted().toTypedArray()
 
     private fun File.filesWithExt(ext: String): Iterable<File> =
         walk().filter { it.isFile && it.extension.equals(ext, ignoreCase = true) }.toList()

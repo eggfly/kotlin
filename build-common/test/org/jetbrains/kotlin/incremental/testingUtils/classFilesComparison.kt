@@ -94,8 +94,8 @@ fun assertEqualDirectories(
         val message: String? = null
         throw ComparisonFailure(
             message,
-            expectedString.replaceFirst(DIR_ROOT_PLACEHOLDER, expected.normalize().absolutePath),
-            actualString.replaceFirst(DIR_ROOT_PLACEHOLDER, actual.normalize().absolutePath)
+            expectedString.replaceFirst(DIR_ROOT_PLACEHOLDER, expected.absolutePath),
+            actualString.replaceFirst(DIR_ROOT_PLACEHOLDER, actual.absolutePath)
         )
     }
 
@@ -276,7 +276,7 @@ private fun fileToStringRepresentation(file: File): String {
             kjsmToString(file)
         }
         file.name.endsWith(".js.map") -> {
-            val generatedJsPath = file.normalize().absolutePath.removeSuffix(".map")
+            val generatedJsPath = file.absolutePath.removeSuffix(".map")
             sourceMapFileToString(file, File(generatedJsPath))
         }
         else -> {
