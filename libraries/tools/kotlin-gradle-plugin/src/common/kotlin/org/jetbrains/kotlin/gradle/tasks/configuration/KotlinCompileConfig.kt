@@ -153,7 +153,7 @@ internal open class BaseKotlinCompileConfig<TASK : KotlinCompile> : AbstractKotl
         parameters.gradleUserHomeDir.set(project.gradle.gradleUserHomeDir)
         val roDepCachePath = System.getenv(READONLY_CACHE_ENV_VAR)
         if (!roDepCachePath.isNullOrEmpty()) {
-            parameters.gradleReadOnlyDependenciesCacheDir.set(File(roDepCachePath).normalize().absoluteFile)
+            parameters.gradleReadOnlyDependenciesCacheDir.set(File(roDepCachePath).absoluteFile)
         }
         parameters.classLoadersCachingService.set(classLoadersCachingService)
         parameters.classpath.from(classpath)

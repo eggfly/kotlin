@@ -50,7 +50,7 @@ fun FileHasher.calculateDirHash(
                 if (!Files.isSymbolicLink(file.toPath())) {
                     hasher.putHash(hash(file))
                 } else {
-                    val absoluteFile = file.normalize().absoluteFile
+                    val absoluteFile = file.absoluteFile
                     hasher.putHash(hash(absoluteFile))
                     hasher.putString(absoluteFile.toRelativeString(dir))
                 }
