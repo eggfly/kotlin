@@ -25,6 +25,7 @@ import org.jetbrains.kotlin.fir.checkers.generator.diagnostics.model.*
 import org.jetbrains.kotlin.fir.declarations.FirDeprecationInfo
 import org.jetbrains.kotlin.fir.declarations.FirFunction
 import org.jetbrains.kotlin.fir.expressions.FirAnnotation
+import org.jetbrains.kotlin.fir.expressions.FirCall
 import org.jetbrains.kotlin.fir.expressions.FirExpression
 import org.jetbrains.kotlin.fir.symbols.FirBasedSymbol
 import org.jetbrains.kotlin.fir.symbols.impl.*
@@ -659,6 +660,12 @@ object DIAGNOSTICS_LIST : DiagnosticList("FirErrors") {
             parameter<ConeKotlinType>("expectedType")
             parameter<ConeKotlinType>("actualType")
             parameter<Boolean>("isMismatchDueToNullability")
+        }
+
+        val MEMBER_PROJECTED_OUT by error<PsiElement> {
+            parameter<ConeKotlinType>("receiver")
+            parameter<String>("projection")
+            parameter<FirCallableSymbol<*>>("symbol")
         }
 
         val NULL_FOR_NONNULL_TYPE by error<PsiElement> {
