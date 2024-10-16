@@ -131,6 +131,7 @@ internal fun IrFunctionAccessExpression.shallowCopy(copyTypeArguments: Boolean =
 
 internal fun IrBuiltIns.copyArgs(from: IrFunctionAccessExpression, into: IrFunctionAccessExpression) {
     into.copyValueArgumentsFrom(from, into.symbol.owner)
+    into.copyTypeArgumentsFrom(from)
     for ((i, argument) in into.arguments.withIndex()) {
         if (argument == null) {
             into.arguments[i] = IrConstImpl.constNull(SYNTHETIC_OFFSET, SYNTHETIC_OFFSET, this.anyNType)

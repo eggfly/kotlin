@@ -51,13 +51,7 @@ internal class KFunctionProxy(
     override fun call(vararg args: Any?): Any? {
         // TODO check arity
         var index = 0
-        val dispatchReceiver = state.irFunction.dispatchReceiverParameter?.let { environment.convertToState(args[index++], it.type) }
-        val extensionReceiver = state.irFunction.extensionReceiverParameter?.let { environment.convertToState(args[index++], it.type) }
-        // TODO context receivers
-        val argsVariables = state.irFunction.valueParameters.map { parameter ->
-            environment.convertToState(args[index++], parameter.type)
-        }
-        val valueArguments = listOfNotNull(dispatchReceiver, extensionReceiver) + argsVariables
+        val valueArguments = state.irFunction.parameters.map { environment.convertToState(args[index++], it.type) }
         return callInterceptor.interceptProxy(state.irFunction, valueArguments)
     }
 

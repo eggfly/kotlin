@@ -76,9 +76,9 @@ class IrInterpreterKCallableNamePreprocessor : IrInterpreterPreprocessor {
 
         fun IrCall.isEnumName(): Boolean {
             val owner = this.symbol.owner
-            if (owner.extensionReceiverParameter != null || owner.valueParameters.isNotEmpty()) return false
+            if (owner.parameters.size != 1) return false
             val property = owner.property ?: return false
-            return this.dispatchReceiver is IrGetEnumValue && property.name.asString() == "name"
+            return this.arguments.singleOrNull() is IrGetEnumValue && property.name.asString() == "name"
         }
     }
 }

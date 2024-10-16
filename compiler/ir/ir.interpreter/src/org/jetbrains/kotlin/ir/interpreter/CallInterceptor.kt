@@ -158,8 +158,7 @@ internal class DefaultCallInterceptor(override val interpreter: IrInterpreter) :
             else -> property.name.asString()
         }
 
-        val receiverType = irFunction.dispatchReceiverParameter?.type ?: irFunction.extensionReceiverParameter?.type
-        val argsType = (listOfNotNull(receiverType) + irFunction.valueParameters.map { it.type }).map { it.fqNameWithNullability() }
+        val argsType = irFunction.parameters.map { it.type }.map { it.fqNameWithNullability() }
         val argsValues = args.wrap(this, irFunction)
 
         withExceptionHandler(environment) {
@@ -184,7 +183,7 @@ internal class DefaultCallInterceptor(override val interpreter: IrInterpreter) :
     private fun calculateRangeTo(type: IrType, args: List<State>) {
         val constructor = type.classOrNull!!.owner.constructors.first()
         val constructorCall = constructor.createConstructorCall()
-        val constructorValueParameters = constructor.valueParameters.map { it.symbol }
+        val constructorValueParameters = constructor.parameters.map { it.symbol }
 
         val primitiveValueParameters = args.map { it as Primitive }
         primitiveValueParameters.forEachIndexed { index, primitive ->

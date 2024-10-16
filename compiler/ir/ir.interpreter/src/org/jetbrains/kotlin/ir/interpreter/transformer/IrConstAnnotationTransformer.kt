@@ -45,7 +45,7 @@ internal abstract class IrConstAnnotationTransformer(
         if (annotation.type is IrErrorType) return
         annotation.arguments.forEachIndexed { i, arg ->
             arg ?: return@forEachIndexed
-            annotation.arguments[i] = transformAnnotationArgument(arg, annotation.symbol.owner.valueParameters[i])
+            annotation.arguments[i] = transformAnnotationArgument(arg, annotation.symbol.owner.parameters[i])
         }
         annotation.saveInConstTracker()
     }

@@ -58,7 +58,7 @@ internal object ArrayOf : IntrinsicBase() {
     }
 
     override fun evaluate(irFunction: IrFunction, environment: IrInterpreterEnvironment) {
-        val elementsSymbol = irFunction.valueParameters.single().symbol
+        val elementsSymbol = irFunction.parameters.single().symbol
         val varargVariable = environment.callStack.loadState(elementsSymbol)
         environment.callStack.pushState(varargVariable)
     }
@@ -70,7 +70,7 @@ internal object ArrayOfNulls : IntrinsicBase() {
     }
 
     override fun evaluate(irFunction: IrFunction, environment: IrInterpreterEnvironment) {
-        val size = environment.callStack.loadState(irFunction.valueParameters.first().symbol).asInt()
+        val size = environment.callStack.loadState(irFunction.parameters.first().symbol).asInt()
         val array = arrayOfNulls<Any?>(size)
         val typeArgument = irFunction.typeParameters.map { environment.callStack.loadState(it.symbol) }.single() as KTypeState
         val returnType = (irFunction.returnType as IrSimpleType).buildSimpleType {
@@ -128,7 +128,7 @@ internal object EnumValueOf : IntrinsicBase() {
 
     private fun getEnumEntryByName(irFunction: IrFunction, environment: IrInterpreterEnvironment): IrEnumEntry? {
         val enumClass = getEnumClass(irFunction, environment)
-        val enumEntryName = environment.callStack.loadState(irFunction.valueParameters.first().symbol).asString()
+        val enumEntryName = environment.callStack.loadState(irFunction.parameters.first().symbol).asString()
         val enumEntry = enumClass.declarations.filterIsInstance<IrEnumEntry>().singleOrNull { it.name.asString() == enumEntryName }
         if (enumEntry == null) {
             IllegalArgumentException("No enum constant ${enumClass.fqName}.$enumEntryName").handleUserException(environment)
@@ -177,13 +177,13 @@ internal object EnumIntrinsics : IntrinsicBase() {
             }
             "compareTo" -> {
                 val ordinalSymbol = enumEntry.irClass.getOriginalPropertyByName("ordinal").symbol
-                val other = callStack.loadState(irFunction.valueParameters.single().symbol)
+                val other = callStack.loadState(irFunction.parameters.single { it.kind == IrParameterKind.RegularParameter }.symbol)
                 val compareTo = enumEntry.getField(ordinalSymbol)!!.asInt().compareTo(other.getField(ordinalSymbol)!!.asInt())
                 callStack.pushState(environment.convertToState(compareTo, irFunction.returnType))
             }
             // TODO "clone" -> throw exception
             "equals" -> {
-                val other = callStack.loadState(irFunction.valueParameters.single().symbol)
+                val other = callStack.loadState(irFunction.parameters.single { it.kind == IrParameterKind.RegularParameter }.symbol)
                 callStack.pushState(environment.convertToState((enumEntry === other), irFunction.returnType))
             }
             "hashCode" -> callStack.pushState(environment.convertToState(enumEntry.hashCode(), irFunction.returnType))
@@ -205,12 +205,12 @@ internal object JsPrimitives : IntrinsicBase() {
     override fun evaluate(irFunction: IrFunction, environment: IrInterpreterEnvironment) {
         when (irFunction.fqName) {
             "kotlin.Long.<init>" -> {
-                val low = environment.callStack.loadState(irFunction.valueParameters[0].symbol).asInt()
-                val high = environment.callStack.loadState(irFunction.valueParameters[1].symbol).asInt()
+                val low = environment.callStack.loadState(irFunction.parameters[0].symbol).asInt()
+                val high = environment.callStack.loadState(irFunction.parameters[1].symbol).asInt()
                 environment.callStack.pushState(environment.convertToState((high.toLong().shl(32) + low), irFunction.returnType))
             }
             "kotlin.Char.<init>" -> {
-                val value = environment.callStack.loadState(irFunction.valueParameters[0].symbol).asInt()
+                val value = environment.callStack.loadState(irFunction.parameters[0].symbol).asInt()
                 environment.callStack.pushState(environment.convertToState(value.toChar(), irFunction.returnType))
             }
         }
@@ -227,14 +227,14 @@ internal object ArrayConstructor : IntrinsicBase() {
     }
 
     override fun unwind(irFunction: IrFunction, environment: IrInterpreterEnvironment): List<Instruction> {
-        if (irFunction.valueParameters.size == 1) return super.unwind(irFunction, environment)
+        if (irFunction.parameters.size == 1) return super.unwind(irFunction, environment)
         val callStack = environment.callStack
         val instructions = super.unwind(irFunction, environment).toMutableList()
 
-        val sizeSymbol = irFunction.valueParameters[0].symbol
+        val sizeSymbol = irFunction.parameters[0].symbol
         val size = callStack.loadState(sizeSymbol).asInt()
 
-        val initSymbol = irFunction.valueParameters[1].symbol
+        val initSymbol = irFunction.parameters[1].symbol
         val state = callStack.loadState(initSymbol).let {
             (it as? KFunctionState) ?: (it as KPropertyState).convertGetterToKFunctionState(environment)
         }
@@ -252,7 +252,7 @@ internal object ArrayConstructor : IntrinsicBase() {
     }
 
     override fun evaluate(irFunction: IrFunction, environment: IrInterpreterEnvironment) {
-        val sizeDescriptor = irFunction.valueParameters[0].symbol
+        val sizeDescriptor = irFunction.parameters[0].symbol
         val size = environment.callStack.loadState(sizeDescriptor).asInt()
         val arrayValue = MutableList<Any?>(size) {
             when {
@@ -262,7 +262,7 @@ internal object ArrayConstructor : IntrinsicBase() {
             }
         }
 
-        if (irFunction.valueParameters.size == 2) {
+        if (irFunction.parameters.size == 2) {
             for (i in size - 1 downTo 0) {
                 arrayValue[i] = environment.callStack.popState().let {
                     // TODO may be use wrap
@@ -296,9 +296,9 @@ internal object AssertIntrinsic : IntrinsicBase() {
     }
 
     override fun unwind(irFunction: IrFunction, environment: IrInterpreterEnvironment): List<Instruction> {
-        if (irFunction.valueParameters.size == 1) return super.unwind(irFunction, environment)
+        if (irFunction.parameters.size == 1) return super.unwind(irFunction, environment)
 
-        val lambdaParameter = irFunction.valueParameters.last()
+        val lambdaParameter = irFunction.parameters.last()
         val lambdaState = environment.callStack.loadState(lambdaParameter.symbol) as KFunctionState
         val call = (lambdaState.invokeSymbol.owner as IrSimpleFunction).createCall()
         call.arguments[0] = lambdaParameter.createGetValue()
@@ -307,9 +307,9 @@ internal object AssertIntrinsic : IntrinsicBase() {
     }
 
     override fun evaluate(irFunction: IrFunction, environment: IrInterpreterEnvironment) {
-        val value = environment.callStack.loadState(irFunction.valueParameters.first().symbol).asBoolean()
+        val value = environment.callStack.loadState(irFunction.parameters.first().symbol).asBoolean()
         if (value) return
-        when (irFunction.valueParameters.size) {
+        when (irFunction.parameters.size) {
             1 -> AssertionError("Assertion failed").handleUserException(environment)
             2 -> AssertionError(environment.callStack.popState().asString()).handleUserException(environment)
         }
@@ -338,7 +338,7 @@ internal object DataClassArrayToString : IntrinsicBase() {
     }
 
     override fun evaluate(irFunction: IrFunction, environment: IrInterpreterEnvironment) {
-        val array = environment.callStack.loadState(irFunction.valueParameters.single().symbol) as Primitive
+        val array = environment.callStack.loadState(irFunction.parameters.single().symbol) as Primitive
         environment.callStack.pushState(environment.convertToState(arrayToString(array.value), irFunction.returnType))
     }
 }
@@ -353,11 +353,11 @@ internal object Indent : IntrinsicBase() {
     }
 
     override fun evaluate(irFunction: IrFunction, environment: IrInterpreterEnvironment) {
-        val str = environment.callStack.loadState(irFunction.getExtensionReceiver()!!).asString()
+        val str = environment.callStack.loadState(irFunction.parameters.single { it.kind == IrParameterKind.ExtensionReceiver }.symbol).asString()
         val trimmed = when (irFunction.fqName) {
             "kotlin.text.StringsKt.trimIndent", "kotlin.text.trimIndent" -> str.trimIndent()
             "kotlin.text.StringsKt.trimMargin", "kotlin.text.trimMargin" -> {
-                val marginPrefix = environment.callStack.loadState(irFunction.valueParameters.single().symbol).asString()
+                val marginPrefix = environment.callStack.loadState(irFunction.parameters.single { it.kind == IrParameterKind.RegularParameter }.symbol).asString()
                 str.trimMargin(marginPrefix)
             }
             "kotlin.text.StringsKt.trimMargin\$default", "kotlin.text.trimMargin\$default" -> str.trimMargin()

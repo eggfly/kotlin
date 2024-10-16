@@ -153,20 +153,23 @@ class IrInterpreter(internal val environment: IrInterpreterEnvironment, internal
     }
 
     private fun interpretCall(call: IrCall) {
-        fun State?.getThisOrSuperReceiver(irFunction: IrFunction): State? {
+        fun State.getThisOrSuperReceiver(irFunction: IrFunction): State {
             // check if this function must be handled by super wrapper object
             if (this !is Common || this.superWrapperClass == null || irFunction.parent !is IrClass) return this
-            if (superWrapperClass!!.irClass.isSubclassOf(irFunction.parentAsClass)) return superWrapperClass
+            if (superWrapperClass!!.irClass.isSubclassOf(irFunction.parentAsClass)) return superWrapperClass!!
             return this
         }
 
         val owner = call.symbol.owner
         // 1. load evaluated arguments from stack
-        val args = owner.parameters.map { callStack.popState() }.reversed()
+        val args = owner.parameters.map { callStack.popState() }.reversed().toMutableList()
         val dispatchReceiver = args.getOrNull(owner.parameters.indexOfFirst { it.kind == IrParameterKind.DispatchReceiver })
 
         // 2. get correct function for interpretation
         val irFunction = dispatchReceiver?.getIrFunctionByIrCall(call) ?: call.symbol.owner
+        owner.parameters.indexOfFirst { it.kind == IrParameterKind.DispatchReceiver }.let {
+            if (it != -1) args[it] = args[it].getThisOrSuperReceiver(irFunction)
+        }
 
         // 3. evaluate reified type arguments; must do it here, before new frame, because outer type arguments can be loaded at this point
         val reifiedTypeArguments = environment.loadReifiedTypeArguments(call)
