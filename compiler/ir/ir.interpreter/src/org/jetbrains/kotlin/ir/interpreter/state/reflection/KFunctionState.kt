@@ -49,7 +49,10 @@ internal class KFunctionState(
             val samFunction = value.classOrNull!!.owner.getSingleAbstractMethod()
             if (samFunction.extensionReceiverParameter != null) {
                 // this change of parameter is needed because of difference in `invoke` and sam calls
-                invokeSymbol.owner.parameters = listOf(invokeSymbol.owner.valueParameters[0]) + invokeSymbol.owner.valueParameters.drop(1)
+                invokeSymbol.owner.parameters.first().kind = IrParameterKind.ExtensionReceiver
+                invokeSymbol.owner.parameters = invokeSymbol.owner.parameters.toMutableList().apply {
+                    removeAt(invokeSymbol.owner.parameters.indexOfFirst { it.kind == IrParameterKind.RegularParameter })
+                }
             }
         }
     private var _parameters: List<KParameter>? = null
@@ -57,17 +60,16 @@ internal class KFunctionState(
     private var _typeParameters: List<KTypeParameter>? = null
 
     val invokeSymbol: IrFunctionSymbol = run {
-        val hasDispatchReceiver = irFunction.dispatchReceiverParameter?.let { getField(it.symbol) } != null
-        val hasExtensionReceiver = irFunction.extensionReceiverParameter?.let { getField(it.symbol) } != null
-        environment.getCachedFunction(irFunction.symbol, hasDispatchReceiver, hasExtensionReceiver) ?: environment.setCachedFunction(
-            irFunction.symbol, hasDispatchReceiver, hasExtensionReceiver,
-            newFunction = createInvokeFunction(irFunction, irClass, hasDispatchReceiver, hasExtensionReceiver).symbol
+        val hasBoundedArgs = irFunction.parameters.map { getField(it.symbol) != null }
+        environment.getCachedFunction(irFunction.symbol, hasBoundedArgs) ?: environment.setCachedFunction(
+            irFunction.symbol, hasBoundedArgs,
+            newFunction = createInvokeFunction(irFunction, irClass, hasBoundedArgs).symbol
         )
     }
 
     companion object {
         private fun createInvokeFunction(
-            irFunction: IrFunction, irClass: IrClass, hasDispatchReceiver: Boolean, hasExtensionReceiver: Boolean
+            irFunction: IrFunction, irClass: IrClass, hasBoundedArgs: List<Boolean>
         ): IrSimpleFunction {
             val invokeFunction = irClass.declarations
                 .filterIsInstance<IrSimpleFunction>()
@@ -83,7 +85,7 @@ internal class KFunctionState(
                 parent = functionClass
                 overriddenSymbols = listOf(invokeFunction.symbol)
 
-                invokeFunction.dispatchReceiverParameter?.deepCopyWithSymbols(initialParent = this)?.let {
+                invokeFunction.dispatchReceiverParameter?.copyTo(this)?.let {
                     parameters = listOf(it)
                 }
 
@@ -91,24 +93,15 @@ internal class KFunctionState(
                     is IrSimpleFunction -> irFunction.createCall()
                     is IrConstructor -> irFunction.createConstructorCall()
                 }.apply {
-                    val dispatchParameter = irFunction.dispatchReceiverParameter
-                    val extensionParameter = irFunction.extensionReceiverParameter
-
                     fun IrValueParameter.copy(): IrValueParameter =
-                        this.copyTo(this@impl).apply { parameters += this }
+                        this.copyTo(this@impl).apply {
+                            this.kind = IrParameterKind.RegularParameter
+                            parameters += this
+                        }
 
-                    var index = 0
-                    if (dispatchParameter != null) {
-                        val newParam = if (!hasDispatchReceiver) dispatchParameter.copy() else dispatchParameter
-                        arguments[index++] = newParam.createGetValue()
-                    }
-                    if (extensionParameter != null) {
-                        val newParam = if (!hasExtensionReceiver) extensionParameter.copy() else extensionParameter
-                        arguments[index++] = newParam.createGetValue()
-                    }
-                    irFunction.valueParameters.forEach { oldParam ->
-                        val newParam = oldParam.copy()
-                        arguments[index++] = newParam.createGetValue()
+                    irFunction.parameters.forEach {
+                        val newParam = if (!hasBoundedArgs[it.indexNew]) it.copy() else it
+                        arguments[it.indexNew] = newParam.createGetValue()
                     }
                 }
 
