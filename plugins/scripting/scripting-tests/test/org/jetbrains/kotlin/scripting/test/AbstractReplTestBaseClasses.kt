@@ -13,13 +13,24 @@ import org.jetbrains.kotlin.scripting.test.repl.TestReplCompilerPluginRegistrar
 import org.jetbrains.kotlin.test.FirParser
 import org.jetbrains.kotlin.test.builders.TestConfigurationBuilder
 import org.jetbrains.kotlin.test.directives.ConfigurationDirectives.WITH_STDLIB
+import org.jetbrains.kotlin.test.directives.configureFirParser
+import org.jetbrains.kotlin.test.frontend.fir.FirReplFrontendFacade
 import org.jetbrains.kotlin.test.model.TestModule
 import org.jetbrains.kotlin.test.runners.AbstractFirDiagnosticTestBase
+import org.jetbrains.kotlin.test.runners.AbstractKotlinCompilerTest
+import org.jetbrains.kotlin.test.runners.baseFirDiagnosticTestConfiguration
 import org.jetbrains.kotlin.test.runners.codegen.AbstractFirScriptCodegenTest
+import org.jetbrains.kotlin.test.runners.enableLazyResolvePhaseChecking
 import org.jetbrains.kotlin.test.services.EnvironmentConfigurator
 import org.jetbrains.kotlin.test.services.TestServices
 
-open class AbstractReplWithCustomDefDiagnosticsTestBase : AbstractFirDiagnosticTestBase(FirParser.Psi) {
+open class AbstractReplWithCustomDefDiagnosticsTestBase : AbstractKotlinCompilerTest() {
+    override fun TestConfigurationBuilder.configuration() {
+        baseFirDiagnosticTestConfiguration(frontendFacade = ::FirReplFrontendFacade)
+        enableLazyResolvePhaseChecking()
+        configureFirParser(FirParser.Psi)
+    }
+
     override fun configure(builder: TestConfigurationBuilder) {
         super.configure(builder)
         with(builder) {
