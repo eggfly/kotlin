@@ -13,11 +13,7 @@ import com.intellij.psi.search.ProjectScope
 import org.jetbrains.kotlin.asJava.finder.JavaElementFinder
 import org.jetbrains.kotlin.cli.common.CLIConfigurationKeys
 import org.jetbrains.kotlin.cli.common.messages.getLogger
-import org.jetbrains.kotlin.cli.jvm.compiler.PsiBasedProjectFileSearchScope
-import org.jetbrains.kotlin.cli.jvm.compiler.TopDownAnalyzerFacadeForJVM
-import org.jetbrains.kotlin.cli.jvm.compiler.VfsBasedProjectEnvironment
-import org.jetbrains.kotlin.cli.jvm.compiler.createLibraryListForJvm
-import org.jetbrains.kotlin.cli.jvm.compiler.unregisterFinders
+import org.jetbrains.kotlin.cli.jvm.compiler.*
 import org.jetbrains.kotlin.cli.jvm.config.JvmClasspathRoot
 import org.jetbrains.kotlin.cli.jvm.config.jvmClasspathRoots
 import org.jetbrains.kotlin.cli.jvm.config.jvmModularRoots
@@ -30,10 +26,11 @@ import org.jetbrains.kotlin.fir.checkers.registerExperimentalCheckers
 import org.jetbrains.kotlin.fir.checkers.registerExtraCommonCheckers
 import org.jetbrains.kotlin.fir.deserialization.ModuleDataProvider
 import org.jetbrains.kotlin.fir.extensions.FirExtensionRegistrar
+import org.jetbrains.kotlin.fir.extensions.FirReplHistoryProvider
 import org.jetbrains.kotlin.fir.java.FirProjectSessionProvider
 import org.jetbrains.kotlin.fir.session.*
 import org.jetbrains.kotlin.fir.session.environment.AbstractProjectEnvironment
-import org.jetbrains.kotlin.fir.session.firCachesFactoryForCliMode
+import org.jetbrains.kotlin.fir.symbols.impl.FirReplSnippetSymbol
 import org.jetbrains.kotlin.library.metadata.resolver.impl.KotlinResolvedLibraryImpl
 import org.jetbrains.kotlin.library.resolveSingleFileKlib
 import org.jetbrains.kotlin.load.kotlin.PackageAndMetadataPartProvider
@@ -56,11 +53,8 @@ import org.jetbrains.kotlin.test.model.TestFile
 import org.jetbrains.kotlin.test.model.TestModule
 import org.jetbrains.kotlin.test.runners.lightTreeSyntaxDiagnosticsReporterHolder
 import org.jetbrains.kotlin.test.services.*
-import org.jetbrains.kotlin.test.services.compilerConfigurationProvider
 import org.jetbrains.kotlin.utils.addToStdlib.runIf
 import org.jetbrains.kotlin.wasm.config.wasmTarget
-import kotlin.collections.filterIsInstance
-import kotlin.collections.orEmpty
 import org.jetbrains.kotlin.konan.file.File as KFile
 
 open class FirReplFrontendFacade(
@@ -103,6 +97,7 @@ open class FirReplFrontendFacade(
         val libraryList: DependencyListForCliModule
     )
 
+    @OptIn(org.jetbrains.kotlin.fir.SessionConfiguration::class)
     private val replCompilationEnvironment: ReplCompilationEnvironment by lazy {
         val firstSnippetModule = testServices.moduleStructure.modules.first()
         val project = this.testServices.compilerConfigurationProvider.getProject(firstSnippetModule)
@@ -113,7 +108,7 @@ open class FirReplFrontendFacade(
         val predefinedJavaComponents = runIf(targetPlatform.isJvm()) {
             FirSharableJavaComponents(firCachesFactoryForCliMode)
         }
-        val projectEnvironment = createLibrarySession(
+        val (librarySession, projectEnvironment) = createLibrarySessionAndProjectEnvironment(
             firstSnippetModule,
             project,
             special("<${firstSnippetModule.name}>"),
@@ -123,6 +118,7 @@ open class FirReplFrontendFacade(
             extensionRegistrars,
             predefinedJavaComponents
         )
+        librarySession.register(FirReplHistoryProvider::class, FirReplHistoryProviderImpl())
         ReplCompilationEnvironment(
             targetPlatform,
             extensionRegistrars,
@@ -172,7 +168,7 @@ open class FirReplFrontendFacade(
         return moduleDataMap
     }
 
-    private fun createLibrarySession(
+    private fun createLibrarySessionAndProjectEnvironment(
         module: TestModule,
         project: Project,
         moduleName: Name,
@@ -181,12 +177,12 @@ open class FirReplFrontendFacade(
         configuration: CompilerConfiguration,
         extensionRegistrars: List<FirExtensionRegistrar>,
         predefinedJavaComponents: FirSharableJavaComponents?
-    ): AbstractProjectEnvironment? {
+    ): Pair<FirSession, VfsBasedProjectEnvironment?> {
         val compilerConfigurationProvider = testServices.compilerConfigurationProvider
         val projectEnvironment: AbstractProjectEnvironment?
         val languageVersionSettings = module.languageVersionSettings
         val isCommon = module.targetPlatform.isCommon()
-        when {
+        val session = when {
             isCommon || module.targetPlatform.isJvm() -> {
                 val packagePartProviderFactory = compilerConfigurationProvider.getPackagePartProviderFactory(module)
                 projectEnvironment = VfsBasedProjectEnvironment(
@@ -270,7 +266,7 @@ open class FirReplFrontendFacade(
             }
             else -> error("Unsupported")
         }
-        return projectEnvironment
+        return session to projectEnvironment
     }
 
     private fun analyze(
@@ -419,6 +415,17 @@ open class FirReplFrontendFacade(
             }
             else -> error("Unsupported")
         }
+    }
+
+    private class FirReplHistoryProviderImpl : FirReplHistoryProvider() {
+        private val history = LinkedHashSet<FirReplSnippetSymbol>()
+
+        override fun getSnippets(): Iterable<FirReplSnippetSymbol> = history.asIterable()
+
+        override fun putSnippet(symbol: FirReplSnippetSymbol) {
+            history.add(symbol)
+        }
+
     }
 
     companion object {

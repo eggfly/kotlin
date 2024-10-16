@@ -602,10 +602,10 @@ class BodyResolveContext(
             withTowerDataCleanup {
 
                 // TODO: robuster matching and error reporting on no extension
-                for (resolver in holder.session.extensionService.replSnippetResolveExtensions) {
-                    val scope = resolver.getSnippetScope(replSnippet)
+                for (resolveExt in holder.session.extensionService.replSnippetResolveExtensions) {
+                    val scope = resolveExt.getSnippetScope(replSnippet, holder.session)
                     if (scope != null) {
-                        addNonLocalTowerDataElement(scope.asTowerDataElement(isLocal = true /* TODO: or false? */))
+                        addNonLocalTowerDataElement(scope.asTowerDataElement(isLocal = false /* TODO: or false? */))
                         break
                     }
                 }
