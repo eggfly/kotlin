@@ -218,13 +218,11 @@ class IrInterpreterCommonChecker : IrInterpreterChecker {
         if (!data.mode.canEvaluateCallableReference(expression)) return false
 
         val owner = expression.symbol.owner
-        val dispatchReceiverComputable = expression.dispatchReceiver?.accept(this, data) ?: true
-        val extensionReceiverComputable = expression.extensionReceiver?.accept(this, data) ?: true
+        if (expression.arguments.any { it?.accept(this, data) == false }) return false
 
         if (!data.mode.canEvaluateFunction(owner)) return false
 
-        val bodyComputable = visitBodyIfNeeded(owner, data)
-        return dispatchReceiverComputable && extensionReceiverComputable && bodyComputable
+        return visitBodyIfNeeded(owner, data)
     }
 
     override fun visitFunctionExpression(expression: IrFunctionExpression, data: IrInterpreterCheckerData): Boolean {
@@ -295,11 +293,9 @@ class IrInterpreterCommonChecker : IrInterpreterChecker {
     override fun visitPropertyReference(expression: IrPropertyReference, data: IrInterpreterCheckerData): Boolean {
         if (!data.mode.canEvaluateCallableReference(expression)) return false
 
-        val dispatchReceiverComputable = expression.dispatchReceiver?.accept(this, data) ?: true
-        val extensionReceiverComputable = expression.extensionReceiver?.accept(this, data) ?: true
+        if (expression.arguments.any { it?.accept(this, data) == false }) return false
 
-        val getterIsComputable = expression.getter?.let { data.mode.canEvaluateFunction(it.owner) } ?: true
-        return dispatchReceiverComputable && extensionReceiverComputable && getterIsComputable
+        return expression.getter?.let { data.mode.canEvaluateFunction(it.owner) } ?: true
     }
 
     override fun visitClassReference(expression: IrClassReference, data: IrInterpreterCheckerData): Boolean {

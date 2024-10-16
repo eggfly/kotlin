@@ -42,11 +42,9 @@ val evaluateIntrinsicAnnotation = FqName("kotlin.EvaluateIntrinsic")
 internal val IrElement.fqName: String
     get() = (this as? IrDeclarationWithName)?.fqNameWhenAvailable?.asString() ?: ""
 
-internal fun IrFunction.getDispatchReceiver(): IrValueParameterSymbol? = this.dispatchReceiverParameter?.symbol
+internal fun IrFunction.getDispatchReceiver(): IrValueParameterSymbol? = this.parameters.firstOrNull { it.kind == IrParameterKind.DispatchReceiver }?.symbol
 
-internal fun IrFunction.getExtensionReceiver(): IrValueParameterSymbol? = this.extensionReceiverParameter?.symbol
-
-internal fun IrFunction.getReceiver(): IrSymbol? = this.getDispatchReceiver() ?: this.getExtensionReceiver()
+internal fun IrFunction.getExtensionReceiver(): IrValueParameterSymbol? = this.parameters.firstOrNull { it.kind == IrParameterKind.ExtensionReceiver }?.symbol
 
 internal fun IrFunctionAccessExpression.getThisReceiver(): IrValueSymbol = this.symbol.owner.parentAsClass.thisReceiver!!.symbol
 
@@ -257,10 +255,7 @@ internal fun IrValueParameter.getDefaultWithActualParameters(
         override fun visitGetValue(expression: IrGetValue): IrExpression {
             val parameter = expression.symbol.owner as? IrValueParameter ?: return super.visitGetValue(expression)
             if (parameter.parent != parameterOwner) return super.visitGetValue(expression)
-            val newParameter = when (parameter.index) {
-                -1 -> newParent.dispatchReceiverParameter ?: newParent.extensionReceiverParameter
-                else -> actualParameters[parameter.index]
-            }
+            val newParameter = actualParameters[parameter.index]
             return IrGetValueImpl(expression.startOffset, expression.endOffset, expression.type, newParameter!!.symbol)
         }
     }

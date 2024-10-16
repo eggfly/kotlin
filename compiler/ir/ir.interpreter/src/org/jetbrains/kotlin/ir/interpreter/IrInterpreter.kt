@@ -16,7 +16,6 @@ import org.jetbrains.kotlin.ir.interpreter.exceptions.*
 import org.jetbrains.kotlin.ir.interpreter.proxy.CommonProxy.Companion.asProxy
 import org.jetbrains.kotlin.ir.interpreter.proxy.Proxy
 import org.jetbrains.kotlin.ir.interpreter.stack.CallStack
-import org.jetbrains.kotlin.ir.interpreter.stack.Field
 import org.jetbrains.kotlin.ir.interpreter.state.*
 import org.jetbrains.kotlin.ir.interpreter.state.reflection.KClassState
 import org.jetbrains.kotlin.ir.interpreter.state.reflection.KFunctionState
@@ -163,13 +162,11 @@ class IrInterpreter(internal val environment: IrInterpreterEnvironment, internal
 
         val owner = call.symbol.owner
         // 1. load evaluated arguments from stack
-        val valueArguments = owner.valueParameters.map { callStack.popState() }.reversed()
-        val extensionReceiver = owner.getExtensionReceiver()?.let { callStack.popState() }
-        val dispatchReceiver = owner.getDispatchReceiver()?.let { callStack.popState() }
+        val args = owner.parameters.map { callStack.popState() }.reversed()
+        val dispatchReceiver = args.getOrNull(owner.parameters.indexOfFirst { it.kind == IrParameterKind.DispatchReceiver })
 
         // 2. get correct function for interpretation
         val irFunction = dispatchReceiver?.getIrFunctionByIrCall(call) ?: call.symbol.owner
-        val args = listOfNotNull(dispatchReceiver.getThisOrSuperReceiver(irFunction), extensionReceiver) + valueArguments
 
         // 3. evaluate reified type arguments; must do it here, before new frame, because outer type arguments can be loaded at this point
         val reifiedTypeArguments = environment.loadReifiedTypeArguments(call)
@@ -178,14 +175,13 @@ class IrInterpreter(internal val environment: IrInterpreterEnvironment, internal
         callStack.pushSimpleInstruction(irFunction)
 
         // 4. load up values onto stack; do it at first to set low priority of these variables
-        if (dispatchReceiver is StateWithClosure) callStack.loadUpValues(dispatchReceiver)
-        if (extensionReceiver is StateWithClosure) callStack.loadUpValues(extensionReceiver)
+        for (valueArgument in args) {
+            if (valueArgument is StateWithClosure) callStack.loadUpValues(valueArgument)
+        }
         if (irFunction.isLocal) callStack.copyUpValuesFromPreviousFrame()
 
         // 5. store arguments in memory (remap args on actual names)
-        irFunction.getDispatchReceiver()?.let { callStack.storeState(it, dispatchReceiver) }
-        irFunction.getExtensionReceiver()?.let { callStack.storeState(it, extensionReceiver) }
-        irFunction.valueParameters.forEachIndexed { i, param -> callStack.storeState(param.symbol, valueArguments[i]) }
+        irFunction.parameters.forEachIndexed { i, param -> callStack.storeState(param.symbol, args[i]) }
         // `call.type` is used in check cast and emptyArray
         callStack.storeState(irFunction.symbol, KTypeState(call.type, environment.kTypeClass.owner))
 
@@ -599,14 +595,13 @@ class IrInterpreter(internal val environment: IrInterpreterEnvironment, internal
     private fun interpretFunctionReference(reference: IrFunctionReference) {
         val irFunction = reference.symbol.owner
 
-        val dispatchReceiver = irFunction.getDispatchReceiver()?.let { reference.dispatchReceiver?.let { callStack.popState() } }
-        val extensionReceiver = irFunction.getExtensionReceiver()?.let { reference.extensionReceiver?.let { callStack.popState() } }
+        val args = irFunction.parameters.zip(reference.arguments)
+            .mapNotNull { (param, arg) -> if (arg != null) param.symbol to callStack.popState() else null }
 
         val function = KFunctionState(
             reference,
             environment,
-            dispatchReceiver?.let { Field(irFunction.getDispatchReceiver()!!, it) },
-            extensionReceiver?.let { Field(irFunction.getExtensionReceiver()!!, it) }
+            args
         )
         if (irFunction.isLocal) callStack.storeUpValues(function)
         callStack.pushState(function)
@@ -614,10 +609,9 @@ class IrInterpreter(internal val environment: IrInterpreterEnvironment, internal
 
     private fun interpretPropertyReference(propertyReference: IrPropertyReference) {
         // it is impossible to get KProperty2 through ::, so only one receiver can be not null (or both null)
-        val getter = propertyReference.getter?.owner
-        val dispatchReceiver = getter?.getDispatchReceiver()?.let { propertyReference.dispatchReceiver?.let { callStack.popState() } }
-        val extensionReceiver = getter?.getExtensionReceiver()?.let { propertyReference.extensionReceiver?.let { callStack.popState() } }
-        val receiver = dispatchReceiver ?: extensionReceiver
+        val receiver = propertyReference.arguments
+            .mapNotNull { arg -> if (arg != null) callStack.popState() else null }
+            .singleOrNull() // TODO how to handle contexts?
 
         val propertyState = KPropertyState(propertyReference, receiver)
 

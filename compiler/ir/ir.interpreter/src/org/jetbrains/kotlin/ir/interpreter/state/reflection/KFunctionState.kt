@@ -125,16 +125,14 @@ internal class KFunctionState(
     constructor(
         functionReference: IrFunctionReference,
         environment: IrInterpreterEnvironment,
-        dispatchReceiver: Field?,
-        extensionReceiver: Field?
+        args: List<Field>
     ) : this(
         functionReference.symbol.owner,
         functionReference.type.classOrNull!!.owner,
         environment,
-        listOfNotNull(dispatchReceiver, extensionReceiver).toMap().toMutableMap()
+        args.toMap().toMutableMap()
     ) {
-        dispatchReceiver?.let { (symbol, state) -> setField(symbol, state) }
-        extensionReceiver?.let { (symbol, state) -> setField(symbol, state) }
+        args.forEach { (symbol, state) -> setField(symbol, state) }
         // receivers are used in comparison of two functions in KFunctionProxy
         upValues += fields.map { it.key to Variable(it.value) }
     }

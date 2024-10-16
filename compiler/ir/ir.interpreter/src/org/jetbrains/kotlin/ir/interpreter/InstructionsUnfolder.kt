@@ -164,12 +164,8 @@ private fun unfoldValueParameters(expression: IrFunctionAccessExpression, enviro
         }
 
         val callWithAllArgs = expression.shallowCopy() // just a copy of given call, but with all arguments in place
-        for ((i, param) in irFunction.parameters.withIndex()) {
-            callWithAllArgs.arguments[i] = when (param.kind) {
-                IrParameterKind.DispatchReceiver -> defaultFun.dispatchReceiverParameter!!.createGetValue()
-                IrParameterKind.ExtensionReceiver -> defaultFun.extensionReceiverParameter!!.createGetValue()
-                else -> actualParameters[i]?.createGetValue()
-            }
+        for (i in irFunction.parameters.indices) {
+            callWithAllArgs.arguments[i] = actualParameters[i]?.createGetValue()
         }
         defaultFun.body = (actualParameters.filterIsInstance<IrVariable>() + defaultFun.createReturn(callWithAllArgs)).wrapWithBlockBody()
 
