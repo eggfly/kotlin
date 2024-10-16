@@ -18,7 +18,6 @@ import org.jetbrains.kotlin.ir.expressions.IrGetValue
 import org.jetbrains.kotlin.ir.expressions.impl.IrCompositeImpl
 import org.jetbrains.kotlin.ir.interpreter.property
 import org.jetbrains.kotlin.ir.types.IrSimpleType
-import org.jetbrains.kotlin.ir.types.IrType
 import org.jetbrains.kotlin.ir.types.typeOrNull
 import org.jetbrains.kotlin.ir.types.typeWith
 import org.jetbrains.kotlin.ir.util.isKFunction
@@ -34,32 +33,28 @@ class IrInterpreterKCallableNamePreprocessor : IrInterpreterPreprocessor {
 
         val callableReference = expression.dispatchReceiver as? IrCallableReference<*> ?: return super.visitCall(expression, data)
 
-        val receivers = callableReference.arguments
+        // TODO can context parameter be bound?
+        // receiver is needed for bound callable reference
+        val receiver = callableReference.dispatchReceiver ?: callableReference.extensionReceiver ?: return expression
 
         val typeArguments = (callableReference.type as IrSimpleType).arguments.map { it.typeOrNull!! }
         if (callableReference.type.isKFunction()) {
             val kFunction = data.irBuiltIns.kFunctionN(typeArguments.size)
-            val newTypeArgs = buildList<IrType> {
-                for ((i, typeArgument) in typeArguments.withIndex()) {
-                    add(if (receivers[i] == null) typeArgument else receivers[i]!!.type)
-                }
-            }
-            val newType = kFunction.typeWith(newTypeArgs)
+            val newType = kFunction.typeWith(receiver.type, *typeArguments.toTypedArray())
             callableReference.type = newType
         }
 
         // We want to change symbol to keep IR correct. If something goes wrong during interpretation, we still will have compilable code.
         expression.symbol = data.irBuiltIns.kCallableClass.owner.properties.single { it.name.asString() == "name" }.getter!!.symbol
 
-        callableReference.arguments.clear()
-
-        if (receivers.size == 1) {
-            val receiver = receivers.first()
-            if (receiver is IrGetValue && receiver.symbol.owner.name == SpecialNames.THIS) return expression
+        // This one is not completly correct. But how we can nullify only dispatch and extension?
+        for (i in callableReference.arguments.indices) {
+            callableReference.arguments[i] = null
         }
+        if (receiver is IrGetValue && receiver.symbol.owner.name == SpecialNames.THIS) return expression
 
         return IrCompositeImpl(
-            expression.startOffset, expression.endOffset, expression.type, origin = null, statements = (receivers + expression).filterNotNull()
+            expression.startOffset, expression.endOffset, expression.type, origin = null, statements = listOf(receiver, expression)
         )
     }
 
