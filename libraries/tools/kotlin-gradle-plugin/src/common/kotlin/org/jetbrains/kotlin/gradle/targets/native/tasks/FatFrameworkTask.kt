@@ -323,7 +323,7 @@ internal constructor(
             commands.forEach {
                 exec.args("-c", it)
             }
-            exec.args(plist.normalize().absolutePath)
+            exec.args(plist.absolutePath)
             exec.isIgnoreExitValue = ignoreExitValue
             // Hide process output.
             val dummyStream = ByteArrayOutputStream()
@@ -341,8 +341,8 @@ internal constructor(
             exec.executable = "/usr/bin/lipo"
             exec.args = listOf(
                 "-create",
-                *inputFiles.map { it.normalize().absolutePath }.toTypedArray(),
-                "-output", outputFile.normalize().absolutePath
+                *inputFiles.map { it.absolutePath }.toTypedArray(),
+                "-output", outputFile.absolutePath
             )
         }
 

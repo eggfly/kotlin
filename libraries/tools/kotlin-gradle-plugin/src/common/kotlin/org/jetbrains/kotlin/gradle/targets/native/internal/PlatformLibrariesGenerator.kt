@@ -62,15 +62,15 @@ internal class PlatformLibrariesGenerator(
         get() = nativeProperties.actualNativeHomeDirectory.get()
 
     private val distribution = customerDistribution(
-        konanHome.normalize().absolutePath,
-        konanDataDir = nativeProperties.konanDataDir.orNull?.normalize()?.absolutePath
+        konanHome.absolutePath,
+        konanDataDir = nativeProperties.konanDataDir.orNull?.absolutePath
     )
 
     private val platformLibsDirectory =
-        File(distribution.platformLibs(konanTarget)).normalize().absoluteFile
+        File(distribution.platformLibs(konanTarget)).absoluteFile
 
     private val defDirectory =
-        File(distribution.platformDefs(konanTarget)).normalize().absoluteFile
+        File(distribution.platformDefs(konanTarget)).absoluteFile
 
     private val konanCacheKind: Provider<NativeCacheKind> = nativeProperties.getKonanCacheKind(konanTarget, konanPropertiesService)
 

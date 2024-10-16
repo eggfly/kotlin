@@ -55,11 +55,11 @@ internal fun buildKotlinNativeBinaryLinkerArgs(
 
     addAll(buildKotlinNativeCommonArgs(toolOptions, compilerPlugins))
 
-    exportLibraries.forEach { add("-Xexport-library=${it.normalize().absolutePath}") }
-    includeLibraries.forEach { add("-Xinclude=${it.normalize().absolutePath}") }
+    exportLibraries.forEach { add("-Xexport-library=${it.absolutePath}") }
+    includeLibraries.forEach { add("-Xinclude=${it.absolutePath}") }
 
     if (friendModules.isNotEmpty()) {
-        addArg("-friend-modules", friendModules.joinToString(File.pathSeparator) { it.normalize().absolutePath })
+        addArg("-friend-modules", friendModules.joinToString(File.pathSeparator) { it.absolutePath })
     }
 }
 
@@ -76,7 +76,7 @@ private fun buildKotlinNativeMainArgs(
     addKey("-ea", debuggable)
     addArg("-target", target.name)
     addArg("-p", outputKind.name.toLowerCaseAsciiOnly())
-    addArg("-o", outFile.normalize().absolutePath)
+    addArg("-o", outFile.absolutePath)
     libraries.forEach { addArg("-l", it.absolutePath) }
 }
 

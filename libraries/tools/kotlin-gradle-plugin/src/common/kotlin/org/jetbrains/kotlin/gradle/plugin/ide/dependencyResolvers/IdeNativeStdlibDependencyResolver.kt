@@ -29,7 +29,7 @@ internal object IdeNativeStdlibDependencyResolver : IdeDependencyResolver {
 
         val klibExtra = try {
             val kotlinLibrary = resolveSingleFileKlib(
-                libraryFile = File(stdlibFile.normalize().absolutePath),
+                libraryFile = File(stdlibFile.absolutePath),
                 strategy = ToolingSingleFileKlibResolveStrategy
             )
 

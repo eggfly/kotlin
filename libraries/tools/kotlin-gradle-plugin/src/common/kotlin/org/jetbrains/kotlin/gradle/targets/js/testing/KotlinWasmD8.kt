@@ -59,7 +59,7 @@ internal class KotlinWasmD8(kotlinJsTest: KotlinJsTest) : KotlinJsTestFramework 
 
         val args = mutableListOf<String>()
         with(args) {
-            add(testRunnerFile.normalize().absolutePath)
+            add(testRunnerFile.absolutePath)
             add("--")
             addAll(cliArgs.toList())
         }

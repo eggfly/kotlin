@@ -39,7 +39,7 @@ open class D8Exec : AbstractExecTask<D8Exec>(D8Exec::class.java) {
             val inputFile = inputFileProperty.asFile.get()
             workingDir = inputFile.parentFile
             newArgs.add("--module")
-            newArgs.add(inputFile.normalize().absolutePath)
+            newArgs.add(inputFile.absolutePath)
         }
         args?.let {
             if (it.isNotEmpty()) {

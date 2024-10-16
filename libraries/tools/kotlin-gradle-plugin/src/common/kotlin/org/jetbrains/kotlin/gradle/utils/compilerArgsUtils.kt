@@ -11,7 +11,7 @@ import java.io.File
 internal var K2JVMCompilerArguments.destinationAsFile: File
     get() = File(destination)
     set(value) {
-        destination = value.normalize().absolutePath
+        destination = value.absolutePath
     }
 
 internal var K2JVMCompilerArguments.classpathAsList: List<File>

@@ -466,9 +466,9 @@ internal abstract class FrameworkCopy : DefaultTask() {
         destination: File,
     ) {
         if (destination.exists()) {
-            execOperations.exec { it.commandLine("rm", "-r", destination.normalize().absolutePath) }
+            execOperations.exec { it.commandLine("rm", "-r", destination.absolutePath) }
         }
-        execOperations.exec { it.commandLine("cp", "-R", source.normalize().absolutePath, destination.normalize().absolutePath) }
+        execOperations.exec { it.commandLine("cp", "-R", source.absolutePath, destination.absolutePath) }
     }
 
     companion object {

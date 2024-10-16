@@ -58,7 +58,7 @@ constructor(
 
         if (validationStrategy == KotlinIrJsGeneratedTSValidationStrategy.IGNORE) return
 
-        val files = generatedDts.map { it.normalize().absolutePath }
+        val files = generatedDts.map { it.absolutePath }
 
         if (files.isEmpty()) return
 

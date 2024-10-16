@@ -387,7 +387,7 @@ class KotlinKarma(
             ignoreOutOfRootNodes = true,
         )
 
-        config.basePath = npmProjectDir.getFile().normalize().absolutePath
+        config.basePath = npmProjectDir.getFile().absolutePath
 
         configurators.forEach {
             it(task)
@@ -429,7 +429,7 @@ class KotlinKarma(
 
         val nodeModules = listOf("karma/bin/karma")
 
-        val karmaConfigAbsolutePath = karmaConfJs.normalize().absolutePath
+        val karmaConfigAbsolutePath = karmaConfJs.absolutePath
         val args = if (debug) {
             nodeJsArgs + listOf(
                 npmProject.require("kotlin-web-helpers/dist/karma-debug-runner.js"),

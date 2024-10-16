@@ -61,7 +61,7 @@ class NativeCompilerDownloader(
             konanDataDirProperty: Provider<File?>
         ): File {
             return DependencyDirectories
-                .getLocalKonanDir(konanDataDirProperty.orNull?.normalize()?.absolutePath)
+                .getLocalKonanDir(konanDataDirProperty.orNull?.absolutePath)
                 .resolve(getDependencyNameWithOsAndVersion(project))
         }
 
