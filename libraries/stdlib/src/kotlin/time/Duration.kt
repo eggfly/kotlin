@@ -998,12 +998,20 @@ private fun parseOverLongIsoComponent(value: String): Long {
     val length = value.length
     var startIndex = 0
     if (length > 0 && value[0] in "+-") startIndex++
-    if ((length - startIndex) > 16 && (startIndex..value.lastIndex).all { value[it] in '0'..'9' }) {
-        // all chars are digits, but more than ceiling(log10(MAX_MILLIS / 1000)) of them
-        return if (value[0] == '-') Long.MIN_VALUE else Long.MAX_VALUE
+    if (length - startIndex > 16) {
+        var firstNonZero = startIndex
+        for (index in startIndex..<length) {
+            when (value[index]) {
+                '0' -> if (firstNonZero == index) firstNonZero++
+                !in '1'..'9' -> return value.toLong()
+            }
+        }
+        if (length - firstNonZero > 16) {
+            // all chars are digits, but more than ceiling(log10(MAX_MILLIS / 1000)) of them
+            return if (value[0] == '-') Long.MIN_VALUE else Long.MAX_VALUE
+        }
     }
-    // TODO: replace with just toLong after min JDK becomes 8
-    return if (value.startsWith("+")) value.drop(1).toLong() else value.toLong()
+    return value.toLong()
 }
 
 

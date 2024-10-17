@@ -553,13 +553,13 @@ class DurationTest {
         }
 
         // zero
-        test(Duration.ZERO, "PT0S", "P0D", "PT0H", "PT0M", "P0DT0H", "PT0H0M", "PT0H0S")
+        test(Duration.ZERO, "PT0S", "P0D", "PT0H", "PT0M", "P0DT0H", "PT0H0M", "PT0H0S", "PT000000000000000000000000H")
 
         // single unit
         test(1.days, "PT24H", "P1D", "PT1440M", "PT86400S")
         test(1.hours, "PT1H")
         test(1.minutes, "PT1M")
-        test(1.seconds, "PT1S")
+        test(1.seconds, "PT1S", "PT000000000000000000000001S")
         test(1.milliseconds, "PT0.001S")
         test(1.microseconds, "PT0.000001S")
         test(1.nanoseconds, "PT0.000000001S", "PT0.0000000009S")
@@ -584,8 +584,8 @@ class DurationTest {
         test(Duration.ZERO, "PT0S", "P1DT-24H", "+PT-1H+60M", "-PT1M-60S")
 
         // infinite
-        test(Duration.INFINITE, "PT9999999999999H", "PT+10000000000000H", "-PT-9999999999999H", "-PT-1234567890123456789012S")
-        test(-Duration.INFINITE, "-PT9999999999999H", "-PT10000000000000H", "PT-1234567890123456789012S")
+        test(Duration.INFINITE, "PT9999999999999H", "PT+10000000000000H", "-PT-9999999999999H", "-PT-1234567890123456789012S", "PT+000000000000000001234567890123456789012H")
+        test(-Duration.INFINITE, "-PT9999999999999H", "-PT10000000000000H", "PT-1234567890123456789012S", "PT-000000000000000001234567890123456789012H")
     }
 
     @Test
@@ -600,6 +600,7 @@ class DurationTest {
             "PT1S2S", "PT1S2H",
             "P9999999999999DT-9999999999999H",
             "PT1.5H", "PT0.5D", "PT.5S", "PT0.25.25S",
+            "PT+-2H", "PT-+2H", "PT+-01234567890123456S"
         )) {
             assertNull(Duration.parseIsoStringOrNull(invalidValue), invalidValue)
             assertFailsWith<IllegalArgumentException>(invalidValue) { Duration.parseIsoString(invalidValue) }.let { e ->
