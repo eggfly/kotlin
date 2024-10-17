@@ -63,7 +63,7 @@ enum class NativeBuildType(
  *
  * @property compilerOutputKind The internal representation of the output type used by the Kotlin/Native compiler.
  * @property taskNameClassifier A string used to classify tasks related to this output kind, typically appended to
- * task names to distinguish between tasks producing different types of binaries (e.g., "executable", "static").
+ * task names to distinguish between tasks producing different types of binaries. For example, "executable" or "static".
  * @property description A human-readable description of the output type, typically shown in logs or error messages,
  * helping developers quickly understand the nature of the binary being generated (e.g., "an executable").
  */
