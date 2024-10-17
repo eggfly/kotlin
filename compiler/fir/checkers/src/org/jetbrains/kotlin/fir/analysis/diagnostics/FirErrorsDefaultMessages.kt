@@ -2455,8 +2455,10 @@ object FirErrorsDefaultMessages : BaseDiagnosticRendererFactory() {
         )
         map.put(
             SETTER_PROJECTED_OUT,
-            "Setter for ''{0}'' is removed by type projection.",
-            VARIABLE_NAME
+            "The receiver type ''{0}'' contains {1} projection which prohibits calling the setter of ''{2}''.",
+            RENDER_TYPE,
+            STRING,
+            VARIABLE_NAME,
         )
         map.put(
             WRONG_INVOCATION_KIND,

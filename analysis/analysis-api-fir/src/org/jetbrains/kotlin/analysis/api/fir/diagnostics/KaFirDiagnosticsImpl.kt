@@ -3655,6 +3655,8 @@ internal class NonInlineMemberValInitializationImpl(
 ) : KaAbstractFirDiagnostic<KtExpression>(firDiagnostic, token), KaFirDiagnostic.NonInlineMemberValInitialization
 
 internal class SetterProjectedOutImpl(
+    override val receiverType: KaType,
+    override val projection: String,
     override val property: KaVariableSymbol,
     firDiagnostic: KtPsiDiagnostic,
     token: KaLifetimeToken,

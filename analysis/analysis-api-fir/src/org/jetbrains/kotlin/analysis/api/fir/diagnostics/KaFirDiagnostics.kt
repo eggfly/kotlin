@@ -3039,6 +3039,8 @@ sealed interface KaFirDiagnostic<PSI : PsiElement> : KaDiagnosticWithPsi<PSI> {
 
     interface SetterProjectedOut : KaFirDiagnostic<KtBinaryExpression> {
         override val diagnosticClass get() = SetterProjectedOut::class
+        val receiverType: KaType
+        val projection: String
         val property: KaVariableSymbol
     }
 

@@ -14,6 +14,7 @@ import org.jetbrains.kotlin.diagnostics.*
 import org.jetbrains.kotlin.fir.FirElement
 import org.jetbrains.kotlin.fir.FirSession
 import org.jetbrains.kotlin.fir.analysis.checkers.declaration.isLocalMember
+import org.jetbrains.kotlin.fir.analysis.checkers.projectionKindWithArticle
 import org.jetbrains.kotlin.fir.analysis.getChild
 import org.jetbrains.kotlin.fir.builder.FirSyntaxErrors
 import org.jetbrains.kotlin.fir.declarations.utils.*
@@ -466,7 +467,7 @@ private fun diagnosticForArgumentTypeMismatch(
         FirErrors.MEMBER_PROJECTED_OUT.createOn(
             source,
             receiverType,
-            if (expectedType.constructor.projection.kind == ProjectionKind.OUT) "an out" else "a star",
+            expectedType.projectionKindWithArticle(),
             symbol.originalOrSelf(),
         )
     } else {
