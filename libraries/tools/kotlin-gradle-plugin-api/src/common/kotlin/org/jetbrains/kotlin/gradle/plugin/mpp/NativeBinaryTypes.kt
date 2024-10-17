@@ -26,7 +26,7 @@ enum class NativeBuildType(
 ) : Named {
     /**
      * A release build type, intended for production use.
-     * Optimized for performance but without debugging symbols.
+     * Optimized for performance but without including debugging symbols.
      */
     RELEASE(true, false),
 
