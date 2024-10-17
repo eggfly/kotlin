@@ -15,7 +15,7 @@ import java.util.*
 /**
  * Enum class representing the build types for a native target in a Kotlin/Native project.
  *
- * @property optimized Indicates whether the build is optimized (e.g., for release builds).
+ * @property optimized Indicates whether the build is optimized. For example, for release builds.
  * @property debuggable Indicates whether the build includes debug information.
  *
  * These are typically used to differentiate between release and debug builds.
