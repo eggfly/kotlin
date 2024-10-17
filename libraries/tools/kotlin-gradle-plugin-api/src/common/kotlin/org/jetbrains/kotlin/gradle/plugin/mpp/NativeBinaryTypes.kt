@@ -13,7 +13,7 @@ import org.jetbrains.kotlin.konan.target.KonanTarget
 import java.util.*
 
 /**
- * Enum class representing the build types for a native target in a Kotlin/Native project.
+ * An enum class representing the different build types for a native target in a Kotlin/Native project.
  *
  * @property optimized Indicates whether the build is optimized. For example, for release builds.
  * @property debuggable Indicates whether the build includes debug information.
