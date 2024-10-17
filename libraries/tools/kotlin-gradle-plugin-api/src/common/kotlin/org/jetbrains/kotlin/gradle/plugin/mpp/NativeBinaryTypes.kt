@@ -119,7 +119,7 @@ enum class NativeOutputKind(
      *
      * By default, all output kinds are available for all platforms.
      *
-     * @param target The target platform for which availability is being checked.
+     * @param target The target platform whose availability is being checked.
      * @return Boolean indicating whether the output kind is available for the given target.
      */
     open fun availableFor(target: KonanTarget) = true
