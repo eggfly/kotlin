@@ -150,4 +150,4 @@ enum class BitcodeEmbeddingMode {
 /** @suppress **/
 @InternalKotlinGradlePluginApi
 const val BITCODE_EMBEDDING_DEPRECATION_MESSAGE =
-    "Bitcode embedding is not supported anymore. Configuring it has no effect. Corresponding DSL parameters will be removed in Kotlin 2.2"
+    "Bitcode embedding is not supported anymore. Configuring it has no effect. The corresponding DSL parameters will be removed in Kotlin 2.2"
