@@ -43,6 +43,7 @@ import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.platform.jvm.isJvm
 import org.jetbrains.kotlin.resolve.DescriptorUtils
 import org.jetbrains.kotlin.util.OperatorNameConventions
+import org.jetbrains.kotlin.utils.addToStdlib.shouldNotBeCalled
 import kotlin.collections.set
 import kotlin.math.min
 
@@ -454,7 +455,7 @@ class ComposerParamTransformer(
                 }
             }
 
-            val valueParametersMapping = explicitParameters
+            val valueParametersMapping = this.explicitParameters // TODO useless code
                 .zip(fn.explicitParameters)
                 .toMap()
 
@@ -511,9 +512,13 @@ class ComposerParamTransformer(
 
             fn.transformChildrenVoid(object : IrElementTransformerVoid() {
                 var isNestedScope = false
-                override fun visitGetValue(expression: IrGetValue): IrGetValue { // TODO useless code and valueParametersMapping?
+                override fun visitGetValue(expression: IrGetValue): IrGetValue {
+                    // TODO useless code and valueParametersMapping?
+                    // valueParametersMapping is a mapping from original function params to copied `fn` params
+                    // matching fn`s params usage to original function params should never yield results
                     val newParam = valueParametersMapping[expression.symbol.owner]
                     return if (newParam != null) {
+                        shouldNotBeCalled("should not get there")
                         IrGetValueImpl(
                             expression.startOffset,
                             expression.endOffset,
@@ -524,8 +529,9 @@ class ComposerParamTransformer(
                     } else expression
                 }
 
-                override fun visitReturn(expression: IrReturn): IrExpression {
+                override fun visitReturn(expression: IrReturn): IrExpression { // TODO should not be useful as well
                     if (expression.returnTargetSymbol == oldFn.symbol) {
+                        shouldNotBeCalled("should not get there")
                         // update the return statement to point to the new function, or else
                         // it will be interpreted as a non-local return
                         return super.visitReturn(
