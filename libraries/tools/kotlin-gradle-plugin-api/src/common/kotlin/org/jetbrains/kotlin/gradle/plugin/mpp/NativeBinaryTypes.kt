@@ -102,7 +102,7 @@ enum class NativeOutputKind(
 
     /**
      * Represents a framework output type, used for iOS/macOS applications.
-     * More information can be found in the [Apple documentation](https://kotl.in/s1yfbb).
+     * For more information see Apple's documentation on [Bundles and frameworks](https://kotl.in/s1yfbb).
      */
     FRAMEWORK(
         CompilerOutputKind.FRAMEWORK,
