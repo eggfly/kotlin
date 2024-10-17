@@ -126,7 +126,7 @@ enum class NativeOutputKind(
 }
 
 /**
- * Enum class representing different modes of embedding LLVM IR bitcode in a binary.
+ * An enum class representing different modes of embedding LLVM IR bitcode in a binary.
  *
  * Bitcode is used in Apple's platforms to defer part of the compilation process to the
  * device where the application is running. These options allow control over whether
