@@ -54,11 +54,9 @@ native {
     }
 }
 
-kotlinNativeInterop {
-    create("env") {
-        defFile("env.konan.backend.kotlin.jetbrains.org.def")
-        compilerOpts(cflags)
-    }
+kotlinNativeInterop.create("env").genTask.configure {
+    defFile.set(project.layout.projectDirectory.file("env.konan.backend.kotlin.jetbrains.org.def"))
+    compilerOpts.set(cflags)
 }
 
 native.sourceSets["main"]!!.implicitTasks()

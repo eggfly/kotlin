@@ -139,14 +139,10 @@ native {
     }
 }
 
-kotlinNativeInterop {
-    this.create("clang") {
-        defFile("clang.def")
-        compilerOpts(cflags)
-        genTask.configure {
-            cppImplementation.files.forEach { inputs.dir(it) }
-        }
-    }
+kotlinNativeInterop.create("clang").genTask.configure {
+    defFile.set(project.layout.projectDirectory.file("clang.def"))
+    compilerOpts.set(cflags)
+    cppImplementation.files.forEach { inputs.dir(it) }
 }
 
 native.sourceSets["main-c"]!!.implicitTasks()

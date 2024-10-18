@@ -147,14 +147,10 @@ native {
     }
 }
 
-kotlinNativeInterop {
-    create("llvm") {
-        defFile("llvm.def")
-        compilerOpts(cflags)
-        genTask.configure {
-            cppImplementation.files.forEach { inputs.dir(it) }
-        }
-    }
+kotlinNativeInterop.create("llvm").genTask.configure {
+    defFile.set(project.layout.projectDirectory.file("llvm.def"))
+    compilerOpts.set(cflags)
+    cppImplementation.files.forEach { inputs.dir(it) }
 }
 
 native.sourceSets["main"]!!.implicitTasks()
