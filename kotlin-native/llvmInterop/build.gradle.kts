@@ -49,9 +49,11 @@ val cflags = buildList {
     addAll(listOf("-Wall", "-W", "-Wno-unused-parameter", "-Wwrite-strings", "-Wmissing-field-initializers"))
     addAll(listOf("-pedantic", "-Wno-long-long", "-Wcovered-switch-default", "-Wdelete-non-virtual-dtor"))
     addAll(listOf("-DNDEBUG", "-D__STDC_CONSTANT_MACROS", "-D__STDC_FORMAT_MACROS", "-D__STDC_LIMIT_MACROS"))
+}
+
+val includeFlags = buildList {
     add("-I${nativeDependencies.llvmPath}/include")
     addAll(cppImplementation.files.map { "-I${it.absolutePath}" })
-    addAll(nativeDependencies.hostPlatform.clangForJni.hostCompilerArgsForJni)
 }
 
 val ldflags = buildList {
@@ -132,7 +134,7 @@ native {
     suffixes {
         (".c" to ".$obj") {
             tool(*hostPlatform.clangForJni.clangC("").toTypedArray())
-            flags(*cflags.toTypedArray(), "-c", "-o", ruleOut(), ruleInFirst())
+            flags(*cflags.toTypedArray(), *includeFlags.toTypedArray(), *hostPlatform.clangForJni.hostCompilerArgsForJni, "-c", "-o", ruleOut(), ruleInFirst())
         }
     }
     sourceSet {
@@ -150,7 +152,9 @@ native {
 kotlinNativeInterop.create("llvm").genTask.configure {
     defFile.set(project.layout.projectDirectory.file("llvm.def"))
     compilerOpts.set(cflags)
-    cppImplementation.files.forEach { inputs.dir(it) }
+    headersDirs.from(cppImplementation)
+    headersDirs.from("${nativeDependencies.llvmPath}/include")
+    outputs.doNotCacheIf("LLVM include directory is provided as an absolute path; and it lies outside the project directory") { false }
 }
 
 native.sourceSets["main"]!!.implicitTasks()

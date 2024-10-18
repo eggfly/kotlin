@@ -49,13 +49,13 @@ val libclang = if (HostManager.hostIsMingw) {
     "lib/${System.mapLibraryName("clang")}"
 }
 
-val commonCompilerFlags = buildList {
+val cflags = listOf("-std=c99")
+val cxxflags = listOf("-std=c++11")
+
+val includeFlags = buildList {
     add("-I${nativeDependencies.llvmPath}/include")
     addAll(cppImplementation.files.map { "-I${it.absolutePath}" })
-    addAll(nativeDependencies.hostPlatform.clangForJni.hostCompilerArgsForJni)
 }
-val cflags = listOf("-std=c99") + commonCompilerFlags
-val cxxflags = listOf("-std=c++11") + commonCompilerFlags
 
 val ldflags = mutableListOf("${nativeDependencies.llvmPath}/$libclang")
 cppLink.files.forEach {
@@ -110,12 +110,12 @@ native {
     suffixes {
         (".c" to ".$obj") {
             tool(*hostPlatform.clangForJni.clangC("").toTypedArray())
-            flags(*cflags.toTypedArray(),
+            flags(*cflags.toTypedArray(), *includeFlags.toTypedArray(), *hostPlatform.clangForJni.hostCompilerArgsForJni,
                     "-c", "-o", ruleOut(), ruleInFirst())
         }
         (".cpp" to ".$obj") {
             tool(*hostPlatform.clangForJni.clangCXX("").toTypedArray())
-            flags(*cxxflags.toTypedArray(), "-c", "-o", ruleOut(), ruleInFirst())
+            flags(*cxxflags.toTypedArray(), *includeFlags.toTypedArray(), *hostPlatform.clangForJni.hostCompilerArgsForJni, "-c", "-o", ruleOut(), ruleInFirst())
         }
 
     }
@@ -142,7 +142,9 @@ native {
 kotlinNativeInterop.create("clang").genTask.configure {
     defFile.set(project.layout.projectDirectory.file("clang.def"))
     compilerOpts.set(cflags)
-    cppImplementation.files.forEach { inputs.dir(it) }
+    headersDirs.from(cppImplementation)
+    headersDirs.from("${nativeDependencies.llvmPath}/include")
+    outputs.doNotCacheIf("LLVM include directory is provided as an absolute path; and it lies outside the project directory") { false }
 }
 
 native.sourceSets["main-c"]!!.implicitTasks()

@@ -28,5 +28,6 @@ class NamedNativeInteropConfig(
         generatedSrcDir.convention(project.layout.buildDirectory.dir("nativeInteropStubs/$name/kotlin"))
         temporaryFilesDir.convention(project.layout.buildDirectory.dir("interopTemp"))
         target.set(HostManager.host.name)
+        workingDirectory.set(project.layout.projectDirectory)
     }
 }

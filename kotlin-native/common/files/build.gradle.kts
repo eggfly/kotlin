@@ -30,7 +30,9 @@ bitcode {
     }
 }
 
-val cflags = listOf("-I${layout.projectDirectory.dir("src/headers").asFile}", *nativeDependencies.hostPlatform.clangForJni.hostCompilerArgsForJni)
+val cflags = emptyList<String>()
+
+val includeFlags = listOf("-I${layout.projectDirectory.dir("src/headers").asFile}")
 
 val ldflags = listOf(bitcode.hostTarget.module("files").get().sourceSets.main.get().task.get().outputFile.get().asFile.absolutePath)
 
@@ -39,7 +41,7 @@ native {
     suffixes {
         (".c" to ".$obj") {
             tool(*hostPlatform.clangForJni.clangC("").toTypedArray())
-            flags(*cflags.toTypedArray(), "-c", "-o", ruleOut(), ruleInFirst())
+            flags(*cflags.toTypedArray(), *includeFlags.toTypedArray(), *hostPlatform.clangForJni.hostCompilerArgsForJni, "-c", "-o", ruleOut(), ruleInFirst())
         }
     }
     sourceSet {
@@ -57,6 +59,7 @@ native {
 kotlinNativeInterop.create("files").genTask.configure {
     defFile.set(project.layout.projectDirectory.file("files.konan.backend.kotlin.jetbrains.org.def"))
     compilerOpts.set(cflags)
+    headersDirs.from(project.layout.projectDirectory.dir("src/headers"))
 }
 
 native.sourceSets["main"]!!.implicitTasks()
