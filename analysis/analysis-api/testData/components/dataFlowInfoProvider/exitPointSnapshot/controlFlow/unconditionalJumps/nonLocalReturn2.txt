@@ -1,14 +1,16 @@
 KaDataFlowExitPointSnapshot:
   defaultExpressionInfo = DefaultExpressionInfo:
-    expression = append("Baz")
-    type = java.lang.StringBuilder!
-  hasEscapingJumps = false
+    expression = 1
+    type = kotlin.Int
+  hasEscapingJumps = true
   hasJumps = true
   hasMultipleJumpKinds = false
   hasMultipleJumpTargets = false
   jumpExpressions = [
-    return@buildString
+    return@foo3 2
   ]
-  returnValueType = null
-  valuedReturnExpressions = []
+  returnValueType = kotlin.Int
+  valuedReturnExpressions = [
+    return@foo3 2
+  ]
   variableReassignments = []
