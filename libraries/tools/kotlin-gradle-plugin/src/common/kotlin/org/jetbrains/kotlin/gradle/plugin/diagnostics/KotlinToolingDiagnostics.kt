@@ -1049,6 +1049,16 @@ object KotlinToolingDiagnostics {
             throwable = Throwable()
         )
     }
+
+    object KotlinCompilerEmbeddableIsPresentInClasspath : ToolingDiagnosticFactory(WARNING) {
+        operator fun invoke(): ToolingDiagnostic = build(
+            """
+                The artifact `org.jetbrains.kotlin:kotlin-compiler-embeddable` is present in the build classpath along Kotlin Gradle plugin.
+                This may lead to unpredictable and inconsistent behavior.
+                For more details, see: https://kotl.in/gradle/internal-compiler-symbols
+            """.trimIndent()
+        )
+    }
 }
 
 private fun String.indentLines(nSpaces: Int = 4, skipFirstLine: Boolean = true): String {
