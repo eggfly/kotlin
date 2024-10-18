@@ -998,12 +998,12 @@ private fun parseOverLongIsoComponent(value: String): Long {
     val length = value.length
     var startIndex = 0
     if (length > 0 && value[0] in "+-") startIndex++
-    if (length - startIndex > 16) {
+    if (length - startIndex > 16) run {
         var firstNonZero = startIndex
         for (index in startIndex..<length) {
             when (value[index]) {
                 '0' -> if (firstNonZero == index) firstNonZero++
-                !in '1'..'9' -> return value.toLong()
+                !in '1'..'9' -> return@run
             }
         }
         if (length - firstNonZero > 16) {
@@ -1011,7 +1011,8 @@ private fun parseOverLongIsoComponent(value: String): Long {
             return if (value[0] == '-') Long.MIN_VALUE else Long.MAX_VALUE
         }
     }
-    return value.toLong()
+    // TODO: replace with just toLong after the minimum supported Android SDK has the same behavior as JDK 8
+    return if (value.startsWith("+") && length > 1 && value[1] in '0'..'9') value.drop(1).toLong() else value.toLong()
 }
 
 
