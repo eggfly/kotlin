@@ -151,7 +151,6 @@ kotlinNativeInterop {
     create("llvm") {
         defFile("llvm.def")
         compilerOpts(cflags)
-        skipNatives()
         genTask.configure {
             cppImplementation.files.forEach { inputs.dir(it) }
         }

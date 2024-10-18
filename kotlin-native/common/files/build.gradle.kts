@@ -58,7 +58,6 @@ kotlinNativeInterop {
     create("files") {
         defFile("files.konan.backend.kotlin.jetbrains.org.def")
         compilerOpts(cflags)
-        skipNatives()
     }
 }
 

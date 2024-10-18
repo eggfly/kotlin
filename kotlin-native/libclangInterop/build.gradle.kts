@@ -143,7 +143,6 @@ kotlinNativeInterop {
     this.create("clang") {
         defFile("clang.def")
         compilerOpts(cflags)
-        skipNatives()
         genTask.configure {
             cppImplementation.files.forEach { inputs.dir(it) }
         }
