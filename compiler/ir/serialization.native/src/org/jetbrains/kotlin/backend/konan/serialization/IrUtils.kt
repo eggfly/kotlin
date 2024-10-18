@@ -34,7 +34,11 @@ fun IrDeclaration.isFromCInteropLibrary(): Boolean {
     // We need to find top-level non-accessor declaration, because
     //  - fir2ir lazy IR creates non-AbstractFir2IrLazyDeclaration declarations sometimes, e.g. for enum entries;
     //  - K2 metadata deserializer doesn't set containerSource for property accessors.
-    val topLevelDeclaration = findTopLevelDeclaration().propertyIfAccessor()
+    val topLevelDeclaration = try {
+        findTopLevelDeclaration().propertyIfAccessor()
+    } catch (e: Throwable) {
+        throw e
+    }
 
     val containerSource = if (topLevelDeclaration is AbstractFir2IrLazyDeclaration<*>)
         getSourceElementFromFir(topLevelDeclaration)
