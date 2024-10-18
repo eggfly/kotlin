@@ -56,8 +56,8 @@ native {
 
 kotlinNativeInterop {
     create("env") {
-        pkg("org.jetbrains.kotlin.backend.konan.env")
-        headers(layout.projectDirectory.files("src/headers/Env.h"))
+        defFile("env.konan.backend.kotlin.jetbrains.org.def")
+        compilerOpts(cflags)
         skipNatives()
     }
 }
