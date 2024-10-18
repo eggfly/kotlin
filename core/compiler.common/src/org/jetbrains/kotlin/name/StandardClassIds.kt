@@ -215,6 +215,7 @@ object StandardClassIds {
         val associatedObjectAnnotations = hashSetOf(AssociatedObjectKey, ExperimentalAssociatedObjects)
 
         val ActualizeByJvmBuiltinProvider = "ActualizeByJvmBuiltinProvider".internalId()
+        val SubclassOptInRequired = "SubclassOptInRequired".baseId()
 
         object ParameterNames {
             val value = Name.identifier("value")
