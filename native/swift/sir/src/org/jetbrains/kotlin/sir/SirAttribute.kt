@@ -21,6 +21,11 @@ public sealed interface SirAttribute {
         val unavailable: Boolean = false,
         val renamed: String = ""
     ) : SirAttribute {
+        init {
+            require(obsoleted || deprecated != unavailable, ) { "Declaration can not be both deprecated/obsolete and unavailable" }
+            require(obsoleted || deprecated || unavailable) { "Positive availability is not supported" }
+        }
+
         override val identifier: String get() = "available"
 
         override val arguments: List<SirArgument> get() = listOfNotNull(
