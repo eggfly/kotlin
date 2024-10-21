@@ -34,6 +34,8 @@ interface LanguageSettingsBuilder : LanguageSettings {
 
     /**
      * Adds an additional opt-in requirement marker with the given fully qualified name.
+     *
+     * See also [org.jetbrains.kotlin.gradle.dsl.KotlinCommonCompilerOptions.optIn].
      */
     fun optIn(annotationName: String)
 }
