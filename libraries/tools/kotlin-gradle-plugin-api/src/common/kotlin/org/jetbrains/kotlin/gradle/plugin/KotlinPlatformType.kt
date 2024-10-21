@@ -58,12 +58,12 @@ enum class KotlinPlatformType : Named, Serializable {
     wasm;
 
     /**
-     * Returns a string representation of the object - a [getName] value.
+     * @suppress
      */
     override fun toString(): String = name
 
     /**
-     * The object's name.
+     * @suppress
      */
     override fun getName(): String = name
 
