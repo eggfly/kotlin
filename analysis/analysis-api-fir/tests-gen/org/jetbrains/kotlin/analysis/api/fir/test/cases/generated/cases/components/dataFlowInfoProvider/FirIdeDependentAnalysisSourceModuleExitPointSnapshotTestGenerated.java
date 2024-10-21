@@ -482,6 +482,12 @@ public class FirIdeDependentAnalysisSourceModuleExitPointSnapshotTestGenerated e
     }
 
     @Test
+    @TestMetadata("parentheses.kt")
+    public void testParentheses() {
+      runTest("analysis/analysis-api/testData/components/dataFlowInfoProvider/exitPointSnapshot/defaultValues/parentheses.kt");
+    }
+
+    @Test
     @TestMetadata("selector.kt")
     public void testSelector() {
       runTest("analysis/analysis-api/testData/components/dataFlowInfoProvider/exitPointSnapshot/defaultValues/selector.kt");
