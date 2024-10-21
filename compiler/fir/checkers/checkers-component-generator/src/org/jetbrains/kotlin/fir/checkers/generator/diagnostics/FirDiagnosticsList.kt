@@ -1443,6 +1443,13 @@ object DIAGNOSTICS_LIST : DiagnosticList("FirErrors") {
             parameter<ExpectActualAnnotationsIncompatibilityType<FirAnnotation>>("incompatibilityType")
         }
 
+        val ACTUAL_OPTIN_NOT_PRESENT_ON_EXPECT by error<KtElement>() {
+            parameter<Symbol>("expectSymbol")
+            parameter<Symbol>("actualSymbol")
+            parameter<ClassId>("optInClassId")
+            parameter<Boolean>("isSubclassOptInRequired")
+        }
+
         val OPTIONAL_DECLARATION_OUTSIDE_OF_ANNOTATION_ENTRY by error<PsiElement>()
 
         val OPTIONAL_DECLARATION_USAGE_IN_NON_COMMON_SOURCE by error<PsiElement>()

@@ -27208,6 +27208,12 @@ public class DiagnosticCompilerTestFE10TestdataTestGenerated extends AbstractDia
       }
 
       @Test
+      @TestMetadata("actualOptInNotPresentOnExpect.kt")
+      public void testActualOptInNotPresentOnExpect() {
+        runTest("compiler/testData/diagnostics/tests/multiplatform/actualOptInNotPresentOnExpect.kt");
+      }
+
+      @Test
       @TestMetadata("actualTypealiasCycle.kt")
       public void testActualTypealiasCycle() {
         runTest("compiler/testData/diagnostics/tests/multiplatform/actualTypealiasCycle.kt");

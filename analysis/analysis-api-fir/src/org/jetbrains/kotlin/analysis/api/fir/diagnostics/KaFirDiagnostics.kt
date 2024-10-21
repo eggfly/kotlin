@@ -2940,6 +2940,14 @@ sealed interface KaFirDiagnostic<PSI : PsiElement> : KaDiagnosticWithPsi<PSI> {
         val incompatibilityType: ExpectActualAnnotationsIncompatibilityType<FirAnnotation>
     }
 
+    interface ActualOptinNotPresentOnExpect : KaFirDiagnostic<KtElement> {
+        override val diagnosticClass get() = ActualOptinNotPresentOnExpect::class
+        val expectSymbol: KaSymbol
+        val actualSymbol: KaSymbol
+        val optInClassId: ClassId
+        val isSubclassOptInRequired: Boolean
+    }
+
     interface OptionalDeclarationOutsideOfAnnotationEntry : KaFirDiagnostic<PsiElement> {
         override val diagnosticClass get() = OptionalDeclarationOutsideOfAnnotationEntry::class
     }

@@ -69,6 +69,7 @@ import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.ACCESSOR_FOR_DELE
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.ACTUAL_ANNOTATIONS_NOT_MATCH_EXPECT
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.ACTUAL_FUNCTION_WITH_DEFAULT_ARGUMENTS
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.ACTUAL_MISSING
+import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.ACTUAL_OPTIN_NOT_PRESENT_ON_EXPECT
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.ACTUAL_TYPEALIAS_TO_SPECIAL_ANNOTATION
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.ACTUAL_TYPE_ALIAS_NOT_TO_CLASS
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.ACTUAL_TYPE_ALIAS_TO_CLASS_WITH_DECLARATION_SITE_VARIANCE
@@ -2382,6 +2383,14 @@ object FirErrorsDefaultMessages : BaseDiagnosticRendererFactory() {
             FirExpectActualAnnotationIncompatibilityDiagnosticRenderers.SYMBOL_RENDERER,
             NOT_RENDERED,
             FirExpectActualAnnotationIncompatibilityDiagnosticRenderers.INCOMPATIBILITY,
+        )
+        map.put(
+            ACTUAL_OPTIN_NOT_PRESENT_ON_EXPECT,
+            "All opt-ins from 'actual' declaration should be present on expect, but {2} violates this rule.",
+            NOT_RENDERED,
+            NOT_RENDERED,
+            CLASS_ID,
+            NOT_RENDERED,
         )
         map.put(
             OPTIONAL_DECLARATION_OUTSIDE_OF_ANNOTATION_ENTRY,
