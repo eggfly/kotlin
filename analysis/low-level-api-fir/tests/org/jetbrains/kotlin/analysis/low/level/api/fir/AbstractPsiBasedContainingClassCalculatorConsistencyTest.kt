@@ -10,6 +10,7 @@ import org.jetbrains.kotlin.analysis.low.level.api.fir.api.getFirResolveSession
 import org.jetbrains.kotlin.analysis.low.level.api.fir.api.getOrBuildFirFile
 import org.jetbrains.kotlin.analysis.low.level.api.fir.providers.LLFirProvider
 import org.jetbrains.kotlin.analysis.low.level.api.fir.test.configurators.AnalysisApiFirSourceTestConfigurator
+import org.jetbrains.kotlin.analysis.low.level.api.fir.util.PsiBasedContainingClassCalculator
 import org.jetbrains.kotlin.analysis.test.framework.base.AbstractAnalysisApiBasedTest
 import org.jetbrains.kotlin.analysis.test.framework.projectStructure.KtTestModule
 import org.jetbrains.kotlin.fir.FirElement
@@ -62,6 +63,11 @@ abstract class AbstractPsiBasedContainingClassCalculatorConsistencyTest : Abstra
 
         val llFirProvider = session.firProvider.also { check(it is LLFirProvider) }
         val llContainingSymbol = llFirProvider.getContainingClass(symbol)
+
+        if (symbol is FirCallableSymbol || symbol is FirClassLikeSymbol) {
+            val psiContainingSymbol = PsiBasedContainingClassCalculator.getContainingClassSymbol(symbol)
+            assert(llContainingSymbol == psiContainingSymbol)
+        }
 
         val signature = computeSignature(symbol)
 
