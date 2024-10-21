@@ -125,15 +125,10 @@ object PsiBasedContainingClassCalculator {
 
     private fun canHaveContainingClassSymbol(symbol: FirBasedSymbol<*>): Boolean {
         return when (symbol) {
-            is FirValueParameterSymbol,
-            is FirFileSymbol,
-            is FirScriptSymbol,
-            is FirCodeFragmentSymbol,
-            is FirAnonymousFunctionSymbol
-                -> false
-            is FirPropertySymbol
-                -> !symbol.isLocal
-            else -> true
+            is FirValueParameterSymbol, is FirAnonymousFunctionSymbol -> false
+            is FirPropertySymbol -> !symbol.isLocal
+            is FirCallableSymbol, is FirClassLikeSymbol -> true
+            else -> false
         }
     }
 

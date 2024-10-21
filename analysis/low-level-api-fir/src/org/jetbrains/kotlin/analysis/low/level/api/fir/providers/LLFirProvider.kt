@@ -109,11 +109,9 @@ internal class LLFirProvider(
             }
 
     override fun getContainingClass(symbol: FirBasedSymbol<*>): FirClassLikeSymbol<*>? {
-        if (symbol is FirCallableSymbol || symbol is FirClassLikeSymbol) {
-            val psiResult = PsiBasedContainingClassCalculator.getContainingClassSymbol(symbol)
-            if (psiResult != null) {
-                return psiResult
-            }
+        val psiResult = PsiBasedContainingClassCalculator.getContainingClassSymbol(symbol)
+        if (psiResult != null) {
+            return psiResult
         }
 
         return super.getContainingClass(symbol)
