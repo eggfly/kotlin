@@ -17,6 +17,7 @@ import org.jetbrains.kotlin.fir.contracts.description.ConeReturnsEffectDeclarati
 import org.jetbrains.kotlin.fir.declarations.*
 import org.jetbrains.kotlin.fir.declarations.impl.FirDefaultPropertyAccessor
 import org.jetbrains.kotlin.fir.expressions.*
+import org.jetbrains.kotlin.fir.expressions.impl.FirElseIfTrueCondition
 import org.jetbrains.kotlin.fir.references.FirControlFlowGraphReference
 import org.jetbrains.kotlin.fir.references.symbol
 import org.jetbrains.kotlin.fir.references.toResolvedPropertySymbol
@@ -27,6 +28,7 @@ import org.jetbrains.kotlin.fir.resolve.dfa.cfg.*
 import org.jetbrains.kotlin.fir.resolve.substitution.ConeSubstitutor
 import org.jetbrains.kotlin.fir.resolve.substitution.chain
 import org.jetbrains.kotlin.fir.resolve.substitution.substitutorByMap
+import org.jetbrains.kotlin.fir.resolve.transformers.CFGTypeStatements
 import org.jetbrains.kotlin.fir.resolve.transformers.body.resolve.FirAbstractBodyResolveTransformer
 import org.jetbrains.kotlin.fir.resolve.transformers.unwrapAnonymousFunctionExpression
 import org.jetbrains.kotlin.fir.resolve.transformers.unwrapAtoms
@@ -38,6 +40,7 @@ import org.jetbrains.kotlin.fir.symbols.impl.FirEnumEntrySymbol
 import org.jetbrains.kotlin.fir.symbols.impl.FirPropertySymbol
 import org.jetbrains.kotlin.fir.symbols.impl.FirTypeParameterSymbol
 import org.jetbrains.kotlin.fir.types.*
+import org.jetbrains.kotlin.fir.visitors.FirVisitorVoid
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.types.ConstantValueKind
@@ -173,13 +176,6 @@ abstract class FirDataFlowAnalyzer(
         val variable = flow.getRealVariableWithoutUnwrappingAlias(expression) ?: return null
         val types = flow.getTypeStatement(variable)?.exactType?.ifEmpty { null } ?: return null
         return variable.getStability(flow, types) to types
-    }
-
-    open fun getNegativeTypesFromSmartcastInfo(expression: FirExpression): Pair<SmartcastStability, NegativeTypeStatement>? {
-        val flow = currentSmartCastPosition ?: return null
-        val variable = flow.getRealVariableWithoutUnwrappingAlias(expression) ?: return null
-        val typeStatement = flow.getNegativeTypeStatement(variable) ?: return null
-        return variable.getStability(flow, typeStatement.types) to typeStatement
     }
 
     fun getStableSubexpressions(expressions: List<FirExpression>): List<FirExpression> {
@@ -549,6 +545,12 @@ abstract class FirDataFlowAnalyzer(
         val expressionVariable = SyntheticVariable(expression)
         flow.addImplication((expressionVariable eq isEq) implies (operandVariable eq null))
         flow.addImplication((expressionVariable eq !isEq) implies (operandVariable notEq null))
+        if (operandVariable is RealVariable) {
+            // expression == null -> expression !is Any
+            flow.addImplication((expressionVariable eq isEq) implies (operandVariable typeNotEq any))
+            // expression != null -> expression !is Nothing?
+            flow.addImplication((expressionVariable eq !isEq) implies (operandVariable typeNotEq nullableNothing))
+        }
     }
 
     private fun processEq(
@@ -731,8 +733,51 @@ abstract class FirDataFlowAnalyzer(
         graphBuilder.exitWhenBranchResult(whenBranch).mergeIncomingFlow()
     }
 
+    fun typeInformationOfCurrentWhen(whenExpression: FirWhenExpression): CFGTypeStatements {
+        val lastNode = graphBuilder.lastNodeOrNull as? WhenBranchConditionExitNode ?: return (null to null)
+        val flow = when (val condition = lastNode.fir.condition) {
+            is FirElseIfTrueCondition -> lastNode.flow
+            else -> {
+                if (!condition.resolvedType.isBoolean) return (null to null)
+                val newFlow = lastNode.flow.fork()
+
+                val visitor = object : FirVisitorVoid() {
+                    override fun visitElement(element: FirElement) {
+                        if (element is FirExpression) {
+                            newFlow.getVariableIfUsedOrReal(element)?.let {
+                                newFlow.commitOperationStatement(it eq false)
+                            }
+                        }
+                    }
+
+                    override fun visitBooleanOperatorExpression(booleanOperatorExpression: FirBooleanOperatorExpression) {
+                        if (booleanOperatorExpression.kind == LogicOperationKind.OR) {
+                            booleanOperatorExpression.leftOperand.accept(this)
+                            booleanOperatorExpression.rightOperand.accept(this)
+                        }
+                    }
+                }
+                condition.accept(visitor)
+                newFlow
+            }
+        }
+        val subjectVariable =
+            whenExpression.subjectVariable?.let { flow.unwrapVariable(RealVariable.local(it.symbol)) }
+                ?: whenExpression.subject?.let { flow.getRealVariableWithoutUnwrappingAlias(it) }
+                ?: return (null to null)
+        val positiveStatement = flow.getTypeStatement(subjectVariable)?.takeIf { stmt ->
+            subjectVariable.getStability(flow, stmt.exactType) == SmartcastStability.STABLE_VALUE
+        }
+        val negativeStatement = flow.getNegativeTypeStatement(subjectVariable)?.takeIf { stmt ->
+            subjectVariable.getStability(flow, stmt.types) == SmartcastStability.STABLE_VALUE
+        }
+        return (positiveStatement to negativeStatement)
+    }
+
     fun exitWhenExpression(whenExpression: FirWhenExpression, callCompleted: Boolean) {
-        val (whenExitNode, syntheticElseNode) = graphBuilder.exitWhenExpression(whenExpression, callCompleted)
+        val lastFlow = (graphBuilder.lastNodeOrNull as? WhenBranchConditionExitNode)?.flow
+        val subjectVariable = whenExpression.subject?.let { lastFlow?.getRealVariableWithoutUnwrappingAlias(it) }
+        val (whenExitNode, syntheticElseNode) = graphBuilder.exitWhenExpression(whenExpression, callCompleted, subjectVariable)
         syntheticElseNode?.mergeWhenBranchEntryFlow()
         whenExitNode.mergeIncomingFlow()
     }

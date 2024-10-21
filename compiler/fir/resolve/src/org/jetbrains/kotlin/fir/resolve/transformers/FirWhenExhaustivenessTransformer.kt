@@ -14,13 +14,16 @@ import org.jetbrains.kotlin.fir.*
 import org.jetbrains.kotlin.fir.declarations.FirEnumEntry
 import org.jetbrains.kotlin.fir.declarations.collectEnumEntries
 import org.jetbrains.kotlin.fir.declarations.getSealedClassInheritors
+import org.jetbrains.kotlin.fir.declarations.utils.isEnumEntry
 import org.jetbrains.kotlin.fir.declarations.utils.isExpect
 import org.jetbrains.kotlin.fir.declarations.utils.modality
 import org.jetbrains.kotlin.fir.expressions.*
 import org.jetbrains.kotlin.fir.expressions.impl.FirElseIfTrueCondition
 import org.jetbrains.kotlin.fir.resolve.BodyResolveComponents
 import org.jetbrains.kotlin.fir.resolve.dfa.NegativeTypeStatement
+import org.jetbrains.kotlin.fir.resolve.dfa.TypeStatement
 import org.jetbrains.kotlin.fir.resolve.fullyExpandedType
+import org.jetbrains.kotlin.fir.resolve.getSuperClassSymbolOrAny
 import org.jetbrains.kotlin.fir.resolve.providers.symbolProvider
 import org.jetbrains.kotlin.fir.resolve.toRegularClassSymbol
 import org.jetbrains.kotlin.fir.resolve.toSymbol
@@ -33,10 +36,11 @@ import org.jetbrains.kotlin.fir.types.*
 import org.jetbrains.kotlin.fir.visitors.FirTransformer
 import org.jetbrains.kotlin.fir.visitors.FirVisitor
 import org.jetbrains.kotlin.name.StandardClassIds
-import org.jetbrains.kotlin.types.SmartcastStability
 import org.jetbrains.kotlin.types.TypeApproximatorConfiguration
 
-class FirWhenExhaustivenessTransformer(private val bodyResolveComponents: BodyResolveComponents) : FirTransformer<Any?>() {
+typealias CFGTypeStatements = Pair<TypeStatement?, NegativeTypeStatement?>
+
+class FirWhenExhaustivenessTransformer(private val bodyResolveComponents: BodyResolveComponents) : FirTransformer<CFGTypeStatements>() {
     companion object {
         private val exhaustivenessCheckers = listOf(
             WhenOnBooleanExhaustivenessChecker,
@@ -45,23 +49,26 @@ class FirWhenExhaustivenessTransformer(private val bodyResolveComponents: BodyRe
             WhenOnNothingExhaustivenessChecker
         )
 
-        fun computeAllMissingCases(session: FirSession, whenExpression: FirWhenExpression): List<WhenMissingCase> {
-            val subjectType = getSubjectType(session, whenExpression)?.minimumBoundIfFlexible(session)
+        fun computeAllMissingCases(session: FirSession, whenExpression: FirWhenExpression, types: CFGTypeStatements): List<WhenMissingCase> {
+            val (positive, negative) = types
+            val subjectType = getSubjectType(session, whenExpression, positive)?.minimumBoundIfFlexible(session)
                 ?: return ExhaustivenessStatus.NotExhaustive.NO_ELSE_BRANCH.reasons
             return buildList {
                 for (type in subjectType.unwrapTypeParameterAndIntersectionTypes(session)) {
                     val checkers = getCheckers(type, session)
-                    collectMissingCases(checkers, whenExpression, type, null, session)
+                    collectMissingCases(checkers, whenExpression, type, negative, session)
                 }
             }
         }
 
-        private fun getSubjectType(session: FirSession, whenExpression: FirWhenExpression): ConeKotlinType? {
+        private fun getSubjectType(session: FirSession, whenExpression: FirWhenExpression, positive: TypeStatement?): ConeKotlinType? {
             val subjectType = whenExpression.subjectVariable?.returnTypeRef?.coneType
                 ?: whenExpression.subject?.resolvedType
                 ?: return null
 
-            return subjectType.fullyExpandedType(session)
+            return ConeTypeIntersector
+                .intersectTypes(session.typeContext, listOfNotNull(subjectType) + positive?.exactType.orEmpty())
+                .fullyExpandedType(session)
         }
 
         /**
@@ -137,25 +144,26 @@ class FirWhenExhaustivenessTransformer(private val bodyResolveComponents: BodyRe
         }
     }
 
-    override fun <E : FirElement> transformElement(element: E, data: Any?): E {
+    override fun <E : FirElement> transformElement(element: E, data: CFGTypeStatements): E {
         throw IllegalArgumentException("Should not be there")
     }
 
     /**
      * The synthetic call for the whole [whenExpression] might be not completed yet
      */
-    override fun transformWhenExpression(whenExpression: FirWhenExpression, data: Any?): FirStatement {
-        processExhaustivenessCheck(whenExpression)
+    override fun transformWhenExpression(whenExpression: FirWhenExpression, data: CFGTypeStatements): FirStatement {
+        processExhaustivenessCheck(whenExpression, data)
         bodyResolveComponents.session.enumWhenTracker?.reportEnumUsageInWhen(
             bodyResolveComponents.file.sourceFile?.path,
-            getSubjectType(bodyResolveComponents.session, whenExpression)?.minimumBoundIfFlexible(bodyResolveComponents.session)
+            getSubjectType(bodyResolveComponents.session, whenExpression, data.first)?.minimumBoundIfFlexible(bodyResolveComponents.session)
         )
         return whenExpression
     }
 
-    private fun processExhaustivenessCheck(whenExpression: FirWhenExpression) {
+    private fun processExhaustivenessCheck(whenExpression: FirWhenExpression, types: CFGTypeStatements) {
         val session = bodyResolveComponents.session
-        val subjectType = getSubjectType(session, whenExpression)
+        val (positive, negative) = types
+        val subjectType = getSubjectType(session, whenExpression, positive)
         if (subjectType == null) {
             whenExpression.replaceExhaustivenessStatus(
                 when {
@@ -170,12 +178,12 @@ class FirWhenExhaustivenessTransformer(private val bodyResolveComponents: BodyRe
 
         // May not need to calculate the status of the minimum bound if there is an else branch for a platform type subject.
         // In that case, only the upper bound of the platform type needs to be calculated.
-        val minimumStatus by lazy { computeExhaustivenessStatus(whenExpression, minimumBound) }
+        val minimumStatus by lazy { computeExhaustivenessStatus(whenExpression, minimumBound, negative) }
 
         fun computeUpperBoundStatus(): ExhaustivenessStatus {
             val upperBound = subjectType.upperBoundIfFlexible()
             if (upperBound == minimumBound) return minimumStatus
-            return computeExhaustivenessStatus(whenExpression, upperBound)
+            return computeExhaustivenessStatus(whenExpression, upperBound, negative)
         }
 
         val status = when {
@@ -196,7 +204,7 @@ class FirWhenExhaustivenessTransformer(private val bodyResolveComponents: BodyRe
         return branches.any { it.condition is FirElseIfTrueCondition }
     }
 
-    private fun computeExhaustivenessStatus(whenExpression: FirWhenExpression, subjectType: ConeKotlinType): ExhaustivenessStatus {
+    private fun computeExhaustivenessStatus(whenExpression: FirWhenExpression, subjectType: ConeKotlinType, negative: NegativeTypeStatement?): ExhaustivenessStatus {
         val session = bodyResolveComponents.session
         val approximatedType = session.typeApproximator.approximateToSuperType(
             subjectType, TypeApproximatorConfiguration.FinalApproximationAfterResolutionAndInference
@@ -206,14 +214,12 @@ class FirWhenExhaustivenessTransformer(private val bodyResolveComponents: BodyRe
             return ExhaustivenessStatus.ExhaustiveAsNothing
         }
 
-        val negative =
-            whenExpression.subject
-                ?.let { bodyResolveComponents.dataFlowAnalyzer.getNegativeTypesFromSmartcastInfo(it) }
-                ?.let { (stability, info) -> info.takeIf { stability == SmartcastStability.STABLE_VALUE } }
-
         var status: ExhaustivenessStatus = ExhaustivenessStatus.NotExhaustive.NO_ELSE_BRANCH
 
         val unwrappedIntersectionTypes = approximatedType.unwrapTypeParameterAndIntersectionTypes(session)
+        if (isVacuousIntersection(unwrappedIntersectionTypes)) {
+            return ExhaustivenessStatus.ProperlyExhaustive
+        }
 
         for (unwrappedSubjectType in unwrappedIntersectionTypes) {
             // `kotlin.Boolean` is always exhaustive despite the fact it could be `expect` (relevant for stdlib K2)
@@ -256,6 +262,20 @@ class FirWhenExhaustivenessTransformer(private val bodyResolveComponents: BodyRe
             ExhaustivenessStatus.NotExhaustive(whenMissingCases)
         }
     }
+
+    fun isVacuousIntersection(types: Collection<ConeKotlinType>): Boolean {
+        val session = bodyResolveComponents.session
+        val enumEntries = types.mapNotNull { type ->
+            (type as? ConeClassLikeType)
+                ?.toRegularClassSymbol(session)
+                ?.takeIf { it.classKind == ClassKind.ENUM_ENTRY || it.classKind == ClassKind.OBJECT }
+        }
+        return enumEntries.any { a ->
+            enumEntries.any { b ->
+                a != b && a.getSuperClassSymbolOrAny(session) == b.getSuperClassSymbolOrAny(session)
+            }
+        }
+    }
 }
 
 private sealed class WhenExhaustivenessChecker {
@@ -291,10 +311,13 @@ private sealed class WhenExhaustivenessChecker {
     }
 }
 
-private object WhenOnNullableExhaustivenessChecker : WhenExhaustivenessChecker() {
-    override fun isApplicable(subjectType: ConeKotlinType, session: FirSession): Boolean {
-        return subjectType.isMarkedOrFlexiblyNullable
-    }
+private sealed class TypeBasedWhenExhaustivenessChecker: WhenExhaustivenessChecker() {
+    abstract fun computeMissingCases(
+        subjectType: ConeKotlinType,
+        negative: NegativeTypeStatement?,
+        session: FirSession,
+        destination: MutableCollection<WhenMissingCase>
+    )
 
     override fun computeMissingCases(
         whenExpression: FirWhenExpression,
@@ -303,35 +326,28 @@ private object WhenOnNullableExhaustivenessChecker : WhenExhaustivenessChecker()
         session: FirSession,
         destination: MutableCollection<WhenMissingCase>
     ) {
-        if (isNullBranchMissing(whenExpression)) {
+        computeMissingCases(subjectType, negative, session, destination)
+    }
+}
+
+private object WhenOnNullableExhaustivenessChecker : TypeBasedWhenExhaustivenessChecker() {
+    override fun isApplicable(subjectType: ConeKotlinType, session: FirSession): Boolean {
+        return subjectType.isMarkedOrFlexiblyNullable
+    }
+
+    override fun computeMissingCases(
+        subjectType: ConeKotlinType,
+        negative: NegativeTypeStatement?,
+        session: FirSession,
+        destination: MutableCollection<WhenMissingCase>
+    ) {
+        if (isNullBranchMissing(negative)) {
             destination.add(WhenMissingCase.NullIsMissing)
         }
     }
 
-    fun isNullBranchMissing(whenExpression: FirWhenExpression): Boolean {
-        val flags = Flags()
-        whenExpression.accept(ConditionChecker, flags)
-        return !flags.containsNull
-    }
-
-    private class Flags {
-        var containsNull = false
-    }
-
-    private object ConditionChecker : AbstractConditionChecker<Flags>() {
-        override fun visitEqualityOperatorCall(equalityOperatorCall: FirEqualityOperatorCall, data: Flags) {
-            val argument = equalityOperatorCall.arguments[1]
-            if (argument.resolvedType.isNullableNothing) {
-                data.containsNull = true
-            }
-        }
-
-        override fun visitTypeOperatorCall(typeOperatorCall: FirTypeOperatorCall, data: Flags) {
-            if (typeOperatorCall.operation == FirOperation.IS && typeOperatorCall.conversionTypeRef.coneType.isMarkedOrFlexiblyNullable) {
-                data.containsNull = true
-            }
-        }
-    }
+    fun isNullBranchMissing(negative: NegativeTypeStatement?): Boolean =
+        negative == null || negative.types.none { it.isMarkedNullable }
 }
 
 private object WhenOnBooleanExhaustivenessChecker : WhenExhaustivenessChecker() {
@@ -352,7 +368,7 @@ private object WhenOnBooleanExhaustivenessChecker : WhenExhaustivenessChecker() 
         destination: MutableCollection<WhenMissingCase>,
     ) {
         if (session.languageVersionSettings.supportsFeature(LanguageFeature.ImprovedExhaustivenessChecksIn21) &&
-            WhenSelfTypeExhaustivenessChecker.isExhaustiveThroughSelfTypeCheck(whenExpression, subjectType, session)
+            WhenSelfTypeExhaustivenessChecker.isExhaustiveThroughSelfTypeCheck(subjectType, negative, session)
         ) {
             return
         }
@@ -382,58 +398,47 @@ private object WhenOnBooleanExhaustivenessChecker : WhenExhaustivenessChecker() 
     }
 }
 
-private object WhenOnEnumExhaustivenessChecker : WhenExhaustivenessChecker() {
+private object WhenOnEnumExhaustivenessChecker : TypeBasedWhenExhaustivenessChecker() {
     override fun isApplicable(subjectType: ConeKotlinType, session: FirSession): Boolean {
         val symbol = subjectType.toRegularClassSymbol(session) ?: return false
         return symbol.fir.classKind == ClassKind.ENUM_CLASS
     }
 
     override fun computeMissingCases(
-        whenExpression: FirWhenExpression,
         subjectType: ConeKotlinType,
         negative: NegativeTypeStatement?,
         session: FirSession,
         destination: MutableCollection<WhenMissingCase>
     ) {
-        if (WhenSelfTypeExhaustivenessChecker.isExhaustiveThroughSelfTypeCheck(whenExpression, subjectType, session)) return
+        if (WhenSelfTypeExhaustivenessChecker.isExhaustiveThroughSelfTypeCheck(subjectType, negative, session)) return
 
         val enumClass = (subjectType.toSymbol(session) as FirRegularClassSymbol).fir
         val notCheckedEntries = enumClass.declarations.mapNotNullTo(mutableSetOf()) { it as? FirEnumEntry }
         notCheckedEntries.removeAll(negative?.entries?.map(FirEnumEntrySymbol::fir)?.toSet() ?: emptySet())
-        whenExpression.accept(ConditionChecker, notCheckedEntries)
         notCheckedEntries.mapTo(destination) { WhenMissingCase.EnumCheckIsMissing(it.symbol.callableId) }
-    }
-
-    private object ConditionChecker : AbstractConditionChecker<MutableSet<FirEnumEntry>>() {
-        override fun visitEqualityOperatorCall(equalityOperatorCall: FirEqualityOperatorCall, data: MutableSet<FirEnumEntry>) {
-            if (!equalityOperatorCall.operation.let { it == FirOperation.EQ || it == FirOperation.IDENTITY }) return
-            val argument = equalityOperatorCall.arguments[1]
-
-            @OptIn(UnsafeExpressionUtility::class)
-            val symbol = argument.toResolvedCallableReferenceUnsafe()?.resolvedSymbol as? FirVariableSymbol<*> ?: return
-            val checkedEnumEntry = symbol.fir as? FirEnumEntry ?: return
-            data.remove(checkedEnumEntry)
-        }
     }
 }
 
-private object WhenOnSealedClassExhaustivenessChecker : WhenExhaustivenessChecker() {
+private object WhenOnSealedClassExhaustivenessChecker : TypeBasedWhenExhaustivenessChecker() {
     override fun isApplicable(subjectType: ConeKotlinType, session: FirSession): Boolean {
         return subjectType.toRegularClassSymbol(session)?.fir?.modality == Modality.SEALED
     }
 
     override fun computeMissingCases(
-        whenExpression: FirWhenExpression,
         subjectType: ConeKotlinType,
         negative: NegativeTypeStatement?,
         session: FirSession,
         destination: MutableCollection<WhenMissingCase>
     ) {
         val allSubclasses = subjectType.toSymbol(session)?.collectAllSubclasses(session) ?: return
-        val negativeSubclasses = negative?.types?.mapNotNull { it.toSymbol(session) }?.toSet() ?: emptySet()
-        val checkedSubclasses = mutableSetOf<FirBasedSymbol<*>>()
-        whenExpression.accept(ConditionChecker, Flags(allSubclasses, checkedSubclasses, session))
-        (allSubclasses - negativeSubclasses - checkedSubclasses).mapNotNullTo(destination) {
+        val remainingSubclasses = allSubclasses.toMutableSet()
+        val reportedNegatives =
+            negative?.types?.mapNotNull { it.toSymbol(session) }.orEmpty() + negative?.entries?.mapNotNull { it.fir.symbol }.orEmpty()
+        for (negativeSubclass in reportedNegatives) {
+            val subclassesOfType = negativeSubclass.collectAllSubclasses(session)
+            remainingSubclasses.removeAll(subclassesOfType)
+        }
+        remainingSubclasses.mapNotNullTo(destination) {
             when (it) {
                 is FirClassSymbol<*> -> WhenMissingCase.IsTypeCheckIsMissing(
                     it.classId,
@@ -445,58 +450,6 @@ private object WhenOnSealedClassExhaustivenessChecker : WhenExhaustivenessChecke
             }
         }
     }
-
-    private class Flags(
-        val allSubclasses: Set<FirBasedSymbol<*>>,
-        val checkedSubclasses: MutableSet<FirBasedSymbol<*>>,
-        val session: FirSession
-    )
-
-    private object ConditionChecker : AbstractConditionChecker<Flags>() {
-        override fun visitEqualityOperatorCall(equalityOperatorCall: FirEqualityOperatorCall, data: Flags) {
-            val isNegated = when (equalityOperatorCall.operation) {
-                FirOperation.EQ, FirOperation.IDENTITY -> false
-                FirOperation.NOT_EQ, FirOperation.NOT_IDENTITY -> true
-                else -> return
-            }
-
-            val symbol = when (val argument = equalityOperatorCall.arguments[1].unwrapSmartcastExpression()) {
-                is FirResolvedQualifier -> {
-                    val firClass = (argument.symbol as? FirRegularClassSymbol)?.fir
-                    if (firClass?.classKind == ClassKind.OBJECT) {
-                        firClass.symbol
-                    } else {
-                        firClass?.companionObjectSymbol
-                    }
-                }
-                else -> {
-                    @OptIn(UnsafeExpressionUtility::class)
-                    argument.toResolvedCallableSymbolUnsafe()?.takeIf { it.fir is FirEnumEntry }
-                }
-            } ?: return
-            processBranch(symbol, isNegated, data)
-        }
-
-        override fun visitTypeOperatorCall(typeOperatorCall: FirTypeOperatorCall, data: Flags) {
-            val isNegated = when (typeOperatorCall.operation) {
-                FirOperation.IS -> false
-                FirOperation.NOT_IS -> true
-                else -> return
-            }
-            val symbol = typeOperatorCall.conversionTypeRef.coneType.fullyExpandedType(data.session).toSymbol(data.session) ?: return
-            processBranch(symbol, isNegated, data)
-        }
-
-        private fun processBranch(symbolToCheck: FirBasedSymbol<*>, isNegated: Boolean, flags: Flags) {
-            val subclassesOfType = symbolToCheck.collectAllSubclasses(flags.session)
-            if (subclassesOfType.none { it in flags.allSubclasses }) {
-                return
-            }
-            val checkedSubclasses = if (isNegated) flags.allSubclasses - subclassesOfType else subclassesOfType
-            flags.checkedSubclasses.addAll(checkedSubclasses)
-        }
-    }
-
 
     private fun FirBasedSymbol<*>.collectAllSubclasses(session: FirSession): Set<FirBasedSymbol<*>> {
         return mutableSetOf<FirBasedSymbol<*>>().apply { collectAllSubclassesTo(this, session) }
@@ -518,13 +471,12 @@ private object WhenOnSealedClassExhaustivenessChecker : WhenExhaustivenessChecke
     }
 }
 
-private object WhenOnNothingExhaustivenessChecker : WhenExhaustivenessChecker() {
+private object WhenOnNothingExhaustivenessChecker : TypeBasedWhenExhaustivenessChecker() {
     override fun isApplicable(subjectType: ConeKotlinType, session: FirSession): Boolean {
         return subjectType.isNullableNothing || subjectType.isNothing
     }
 
     override fun computeMissingCases(
-        whenExpression: FirWhenExpression,
         subjectType: ConeKotlinType,
         negative: NegativeTypeStatement?,
         session: FirSession,
@@ -538,13 +490,12 @@ private object WhenOnNothingExhaustivenessChecker : WhenExhaustivenessChecker() 
  * Checks if any branches are of the same type, or a super-type, of the subject. Must be the only checker when used, as
  * the result of the checker is [WhenMissingCase.Unknown] when no matching branch is found.
  */
-private data object WhenSelfTypeExhaustivenessChecker : WhenExhaustivenessChecker() {
+private data object WhenSelfTypeExhaustivenessChecker : TypeBasedWhenExhaustivenessChecker() {
     override fun isApplicable(subjectType: ConeKotlinType, session: FirSession): Boolean {
         return true
     }
 
     override fun computeMissingCases(
-        whenExpression: FirWhenExpression,
         subjectType: ConeKotlinType,
         negative: NegativeTypeStatement?,
         session: FirSession,
@@ -553,7 +504,7 @@ private data object WhenSelfTypeExhaustivenessChecker : WhenExhaustivenessChecke
         // This checker should only be used when no other missing cases are being reported.
         if (destination.isNotEmpty()) return
 
-        if (!isExhaustiveThroughSelfTypeCheck(whenExpression, subjectType, session)) {
+        if (!isExhaustiveThroughSelfTypeCheck(subjectType, negative, session)) {
             // If there are no cases that check for self-type or super-type, report an Unknown missing case,
             // since we do not want to suggest this sort of check.
             destination.add(WhenMissingCase.Unknown)
@@ -561,8 +512,8 @@ private data object WhenSelfTypeExhaustivenessChecker : WhenExhaustivenessChecke
     }
 
     fun isExhaustiveThroughSelfTypeCheck(
-        whenExpression: FirWhenExpression,
         subjectType: ConeKotlinType,
+        negative: NegativeTypeStatement?,
         session: FirSession,
     ): Boolean {
         /**
@@ -578,7 +529,7 @@ private data object WhenSelfTypeExhaustivenessChecker : WhenExhaustivenessChecke
          * ```
          */
         if (WhenOnNullableExhaustivenessChecker.isApplicable(subjectType, session) &&
-            WhenOnNullableExhaustivenessChecker.isNullBranchMissing(whenExpression)
+            WhenOnNullableExhaustivenessChecker.isNullBranchMissing(negative)
         ) {
             return false
         }
@@ -586,19 +537,9 @@ private data object WhenSelfTypeExhaustivenessChecker : WhenExhaustivenessChecke
         // If NullIsMissing was *not* reported, the subject can safely be converted to a not-null type.
         val convertedSubjectType = subjectType.withNullability(nullable = false, typeContext = session.typeContext)
 
-        val checkedTypes = mutableSetOf<ConeKotlinType>()
-        whenExpression.accept(ConditionChecker, checkedTypes)
-
         // If there are no cases that check for self-type or super-type, report an Unknown missing case,
         // since we do not want to suggest this sort of check.
-        return checkedTypes.any { convertedSubjectType.isSubtypeOf(it, session) }
-    }
-
-    private object ConditionChecker : AbstractConditionChecker<MutableSet<ConeKotlinType>>() {
-        override fun visitTypeOperatorCall(typeOperatorCall: FirTypeOperatorCall, data: MutableSet<ConeKotlinType>) {
-            if (typeOperatorCall.operation != FirOperation.IS) return
-            data.add(typeOperatorCall.conversionTypeRef.coneType)
-        }
+        return negative?.types?.any { convertedSubjectType.isSubtypeOf(it, session) } == true
     }
 
 }

@@ -17,9 +17,13 @@ import org.jetbrains.kotlin.analysis.api.resolution.KaSuccessCallInfo
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.low.level.api.fir.api.getOrBuildFirSafe
 import org.jetbrains.kotlin.diagnostics.WhenMissingCase
+import org.jetbrains.kotlin.fir.declarations.FirControlFlowGraphOwner
 import org.jetbrains.kotlin.fir.declarations.FirErrorFunction
 import org.jetbrains.kotlin.fir.expressions.FirReturnExpression
 import org.jetbrains.kotlin.fir.expressions.FirWhenExpression
+import org.jetbrains.kotlin.fir.resolve.dfa.cfg.ControlFlowGraph
+import org.jetbrains.kotlin.fir.resolve.dfa.cfg.WhenSyntheticElseBranchNode
+import org.jetbrains.kotlin.fir.resolve.dfa.controlFlowGraph
 import org.jetbrains.kotlin.fir.resolve.transformers.FirWhenExhaustivenessTransformer
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.psi.*
@@ -40,7 +44,26 @@ internal class KaFirExpressionInformationProvider(
 
     override fun KtWhenExpression.computeMissingCases(): List<WhenMissingCase> = withValidityAssertion {
         val firWhenExpression = getOrBuildFirSafe<FirWhenExpression>(analysisSession.firResolveSession) ?: return emptyList()
-        return FirWhenExhaustivenessTransformer.computeAllMissingCases(analysisSession.firResolveSession.useSiteFirSession, firWhenExpression)
+        val typesFromCfg = getClosestControlFlowGraph()?.let negative@{ cfg ->
+            val finalNode = cfg.nodes
+                .filterIsInstance<WhenSyntheticElseBranchNode>()
+                .firstOrNull() { node -> node.fir == firWhenExpression }
+                ?: return@negative null
+            finalNode.subjectVariable?.let {
+                val finalFlow = finalNode.flow
+                finalFlow.getTypeStatement(it) to finalFlow.getNegativeTypeStatement(it)
+            }
+        } ?: (null to null)
+        return FirWhenExhaustivenessTransformer.computeAllMissingCases(
+            analysisSession.firResolveSession.useSiteFirSession,
+            firWhenExpression,
+            typesFromCfg
+        )
+    }
+
+    fun KtElement.getClosestControlFlowGraph(): ControlFlowGraph? = withValidityAssertion {
+        val fir = getOrBuildFirSafe<FirControlFlowGraphOwner>(firResolveSession) ?: return null
+        return fir.controlFlowGraphReference?.controlFlowGraph ?: (this.parent as? KtElement)?.getClosestControlFlowGraph()
     }
 
     override val KtExpression.isUsedAsExpression: Boolean

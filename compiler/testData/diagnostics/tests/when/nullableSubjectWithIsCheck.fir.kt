@@ -82,7 +82,7 @@ class KClassWithGetter {
     var prop: Int? = 0
         get() = when (prop) {
             null -> null
-            is Int -> prop
+            <!USELESS_IS_CHECK!>is Int<!> -> prop
         }
 }
 

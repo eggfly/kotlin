@@ -44,6 +44,7 @@ import org.jetbrains.kotlin.fir.symbols.impl.FirValueParameterSymbol
 import org.jetbrains.kotlin.fir.types.FirTypeProjection
 import org.jetbrains.kotlin.fir.types.FirTypeRef
 import org.jetbrains.kotlin.fir.types.builder.buildErrorTypeRef
+import org.jetbrains.kotlin.fir.types.impl.FirImplicitTypeRefImplWithoutSource
 import org.jetbrains.kotlin.lexer.KtTokens.*
 import org.jetbrains.kotlin.name.CallableId
 import org.jetbrains.kotlin.name.SpecialNames
@@ -789,8 +790,18 @@ class LightTreeRawFirExpressionBuilder(
                 DESTRUCTURING_DECLARATION -> subjectExpression =
                     getAsFirExpression(it, "Incorrect when subject expression: ${whenExpression.asText}")
                 WHEN_ENTRY -> whenEntryNodes += it
-                else -> if (it.isExpression()) subjectExpression =
-                    getAsFirExpression(it, "Incorrect when subject expression: ${whenExpression.asText}")
+                else -> if (it.isExpression()) subjectVariable = buildProperty {
+                    source = it.toFirSourceElement()
+                    origin = FirDeclarationOrigin.Synthetic.WhenSubject
+                    moduleData = baseModuleData
+                    returnTypeRef = FirImplicitTypeRefImplWithoutSource
+                    name = SpecialNames.WHEN_SUBJECT
+                    initializer = getAsFirExpression(it, "Incorrect when subject expression: ${whenExpression.asText}")
+                    isVar = false
+                    symbol = FirPropertySymbol(SpecialNames.WHEN_SUBJECT)
+                    isLocal = true
+                    status = FirDeclarationStatusImpl(Visibilities.Local, Modality.FINAL)
+                }
             }
         }
         subjectExpression = subjectVariable?.initializer ?: subjectExpression

@@ -92,10 +92,14 @@ abstract class LogicSystem(private val context: ConeInferenceContext) {
     fun addImplication(flow: MutableFlow, implication: Implication) {
         val effect = implication.effect
         val redundant = effect == implication.condition || when (effect) {
-            is TypeStatement ->
-                effect.isEmpty || flow.approvedTypeStatements[effect.variable]?.exactType?.containsAll(effect.exactType) == true
-            is NegativeTypeStatement ->
-                effect.isEmpty || flow.approvedNegativeTypeStatements[effect.variable]?.types?.containsAll(effect.types) == true
+            is TypeStatement -> {
+                val positiveStatement = flow.approvedTypeStatements[effect.variable]
+                effect.isEmpty || positiveStatement?.exactType?.containsAll(effect.exactType) == true
+            }
+            is NegativeTypeStatement -> {
+                val negativeStatement = flow.approvedNegativeTypeStatements[effect.variable]
+                effect.isEmpty || (negativeStatement?.types?.containsAll(effect.types) == true && negativeStatement.entries.containsAll(effect.entries))
+            }
             // Synthetic variables can only be referenced in tree order, so implications with synthetic variables can
             // only look like "if <expression> is A, then <part of that expression> is B". If we don't already have any
             // statements about a part of the expression, then we never will, as we're already exiting the entire expression.

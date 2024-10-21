@@ -2639,6 +2639,7 @@ open class PsiRawFirBuilder(
                 else -> ktSubjectExpression
             }?.toFirExpression("Incorrect when subject expression: ${ktSubjectExpression?.text}")
             val subjectVariable = when (ktSubjectExpression) {
+                null -> null
                 is KtVariableDeclaration -> {
                     val name = ktSubjectExpression.nameAsSafeName
                     buildProperty {
@@ -2656,7 +2657,21 @@ open class PsiRawFirBuilder(
                         ktSubjectExpression.extractAnnotationsTo(this)
                     }
                 }
-                else -> null
+                else -> {
+                    buildProperty {
+                        source = ktSubjectExpression.toFirSourceElement()
+                        moduleData = baseModuleData
+                        origin = FirDeclarationOrigin.Synthetic.WhenSubject
+                        returnTypeRef = FirImplicitTypeRefImplWithoutSource
+                        this.name = SpecialNames.WHEN_SUBJECT
+                        initializer = subjectExpression
+                        delegate = null
+                        isVar = false
+                        symbol = FirPropertySymbol(SpecialNames.WHEN_SUBJECT)
+                        isLocal = true
+                        status = FirDeclarationStatusImpl(Visibilities.Local, Modality.FINAL)
+                    }
+                }
             }
             val hasSubject = subjectExpression != null
 

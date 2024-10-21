@@ -11,6 +11,7 @@ import org.jetbrains.kotlin.fir.expressions.impl.FirElseIfTrueCondition
 import org.jetbrains.kotlin.fir.expressions.impl.FirEmptyExpressionBlock
 import org.jetbrains.kotlin.fir.references.FirResolvedNamedReference
 import org.jetbrains.kotlin.fir.resolve.ResolutionMode
+import org.jetbrains.kotlin.fir.resolve.dfa.cfg.WhenBranchConditionExitNode
 import org.jetbrains.kotlin.fir.resolve.fullyExpandedType
 import org.jetbrains.kotlin.fir.resolve.inference.TemporaryInferenceSessionHook
 import org.jetbrains.kotlin.fir.resolve.transformExpressionUsingSmartcastInfo
@@ -96,7 +97,9 @@ class FirControlFlowStatementsResolveTransformer(transformer: FirAbstractBodyRes
                         completionNeeded = true
                     }
                 }
-                whenExpression = whenExpression.transformSingle(whenExhaustivenessTransformer, null)
+
+                val typeInformation = dataFlowAnalyzer.typeInformationOfCurrentWhen(whenExpression)
+                whenExpression = whenExpression.transformSingle(whenExhaustivenessTransformer, typeInformation)
 
                 // This is necessary to perform outside the place where the synthetic call is created because
                 // exhaustiveness is not yet computed there, but at the same time to compute it properly

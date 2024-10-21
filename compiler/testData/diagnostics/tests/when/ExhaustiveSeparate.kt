@@ -2,6 +2,15 @@ enum class MyEnum {
     A, B, C
 }
 
+fun foo(x: MyEnum?): Int {
+    return when (x) {
+        null -> 0
+        MyEnum.A -> 2
+        MyEnum.B -> 2
+        MyEnum.C -> 3
+    }
+}
+
 fun foo(x: MyEnum): Int {
     if (x == MyEnum.A) return 1
     return <!NO_ELSE_IN_WHEN!>when<!> (x) {

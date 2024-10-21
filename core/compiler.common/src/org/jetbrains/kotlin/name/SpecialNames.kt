@@ -76,6 +76,9 @@ object SpecialNames {
     @JvmField
     val ENUM_GET_ENTRIES = Name.special("<get-entries>")
 
+    @JvmField
+    val WHEN_SUBJECT = Name.special("<when-subject>")
+
     /**
      * Special name to store expressions used as indexes in subscription operators (`get` and `set`).
      *
