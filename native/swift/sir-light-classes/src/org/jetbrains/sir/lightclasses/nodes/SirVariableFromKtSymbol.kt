@@ -6,8 +6,7 @@
 package org.jetbrains.sir.lightclasses.nodes
 
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
-import org.jetbrains.kotlin.analysis.api.symbols.KaVariableSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.isTopLevel
+import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.sir.*
 import org.jetbrains.kotlin.sir.builder.buildGetter
 import org.jetbrains.kotlin.sir.builder.buildSetter
@@ -41,17 +40,21 @@ internal class SirVariableFromKtSymbol(
         translateReturnType()
     }
     override val getter: SirGetter by lazy {
-        buildGetter {}.also {
+        ((ktSymbol as? KaPropertySymbol)?.let {
+            it.getter?.let {
+                SirGetterFromKtSymbol(it, ktModule, sirSession)
+            }
+        } ?: buildGetter()).also {
             it.parent = this@SirVariableFromKtSymbol
         }
     }
     override val setter: SirSetter? by lazy {
-        if (!ktSymbol.isVal) {
-            buildSetter {}.also {
-                it.parent = this@SirVariableFromKtSymbol
+        ((ktSymbol as? KaPropertySymbol)?.let {
+            it.setter?.let {
+                SirSetterFromKtSymbol(it, ktModule, sirSession)
             }
-        } else {
-            null
+        } ?: buildSetter().takeIf { !ktSymbol.isVal })?.also {
+            it.parent = this@SirVariableFromKtSymbol
         }
     }
     override val documentation: String? by lazy {
@@ -64,7 +67,7 @@ internal class SirVariableFromKtSymbol(
         }
         set(_) = Unit
 
-    override val attributes: List<SirAttribute> = this.translatedAttributes
+    override val attributes: List<SirAttribute> by lazy { this.translatedAttributes }
 
     override val isOverride: Boolean
         get() = isInstance && overridableCandidates.any {
@@ -78,4 +81,31 @@ internal class SirVariableFromKtSymbol(
 
     override val modality: SirModality
         get() = ktSymbol.modality.sirModality
+}
+
+internal class SirGetterFromKtSymbol(
+    override val ktSymbol: KaPropertyGetterSymbol,
+    override val ktModule: KaModule,
+    override val sirSession: SirSession,
+) : SirGetter(), SirFromKtSymbol<KaPropertyGetterSymbol> {
+    override val origin: SirOrigin by lazy { KotlinSource(ktSymbol) }
+    override val visibility: SirVisibility get() = SirVisibility.PUBLIC
+    override val documentation: String? by lazy { ktSymbol.documentation() }
+    override lateinit var parent: SirDeclarationParent
+    override val attributes: List<SirAttribute> = this.translatedAttributes
+    override var body: SirFunctionBody? = null
+}
+
+internal class SirSetterFromKtSymbol(
+    override val ktSymbol: KaPropertySetterSymbol,
+    override val ktModule: KaModule,
+    override val sirSession: SirSession,
+) : SirSetter(), SirFromKtSymbol<KaPropertySetterSymbol> {
+    override val origin: SirOrigin by lazy { KotlinSource(ktSymbol) }
+    override val visibility: SirVisibility get() = SirVisibility.PUBLIC
+    override val documentation: String? by lazy { ktSymbol.documentation() }
+    override lateinit var parent: SirDeclarationParent
+    override val attributes: List<SirAttribute> = this.translatedAttributes
+    override var body: SirFunctionBody? = null
+    override val parameterName: String = "newValue"
 }

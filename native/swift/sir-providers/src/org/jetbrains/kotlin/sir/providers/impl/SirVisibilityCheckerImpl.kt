@@ -11,12 +11,16 @@ import org.jetbrains.kotlin.analysis.api.components.DefaultTypeClassIds
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.analysis.api.types.KaType
+import org.jetbrains.kotlin.analysis.api.types.classSymbol
 import org.jetbrains.kotlin.analysis.api.types.symbol
+import org.jetbrains.kotlin.sir.SirClass
+import org.jetbrains.kotlin.sir.SirModality
 import org.jetbrains.kotlin.sir.SirVisibility
 import org.jetbrains.kotlin.sir.providers.SirVisibilityChecker
 import org.jetbrains.kotlin.sir.providers.utils.UnsupportedDeclarationReporter
 import org.jetbrains.kotlin.sir.providers.utils.deprecatedAnnotation
 import org.jetbrains.kotlin.sir.providers.utils.isAbstract
+import org.jetbrains.kotlin.utils.findIsInstanceAnd
 
 public class SirVisibilityCheckerImpl(
     private val unsupportedDeclarationReporter: UnsupportedDeclarationReporter,
@@ -29,7 +33,7 @@ public class SirVisibilityCheckerImpl(
 
         val isConsumable = isPublic() && when (ktSymbol) {
             is KaNamedClassSymbol -> {
-                ktSymbol.isConsumableBySirBuilder(ktAnalysisSession)
+                ktSymbol.isConsumableBySirBuilder(ktAnalysisSession) && !ktSymbol.hasHiddenAncestors(ktAnalysisSession)
             }
             is KaConstructorSymbol -> {
                 if ((ktSymbol.containingSymbol as? KaClassSymbol)?.modality?.isAbstract() != false) {
@@ -43,7 +47,7 @@ public class SirVisibilityCheckerImpl(
                 ktSymbol.isConsumableBySirBuilder()
             }
             is KaVariableSymbol -> {
-                ktSymbol.isConsumableBySirBuilder()
+                ktSymbol.isConsumableBySirBuilder() && !ktSymbol.hasHiddenAccessors
             }
             is KaTypeAliasSymbol -> ktSymbol.expandedType.fullyExpandedType
                 .let {
@@ -127,8 +131,24 @@ public class SirVisibilityCheckerImpl(
         (expandedSymbol as? KaDeclarationSymbol)?.sirVisibility(ktAnalysisSession) == SirVisibility.PUBLIC
     }
 
+    private val KaVariableSymbol.hasHiddenAccessors
+        get() = (this as? KaPropertySymbol)?.let {
+            it.getter?.deprecatedAnnotation?.level == DeprecationLevel.HIDDEN && it.setter?.deprecatedAnnotation?.level == DeprecationLevel.HIDDEN
+        } ?: false
+
+    private fun KaClassSymbol.hasHiddenAncestors(ktAnalysisSession: KaSession): Boolean = with(ktAnalysisSession) {
+        generateSequence(this@hasHiddenAncestors) {
+            it.superTypes.map { it.symbol }.findIsInstanceAnd<KaClassSymbol> { it.classKind != KaClassKind.INTERFACE }
+        }.any {
+            it.deprecatedAnnotation?.level.let { it == DeprecationLevel.HIDDEN || it == DeprecationLevel.ERROR }
+        }
+    }
+
     @OptIn(KaExperimentalApi::class)
     private fun KaDeclarationSymbol.isPublic(): Boolean = compilerVisibility.isPublicAPI
 }
+
+//it.superTypes.findIsInstanceAnd<KaNamedClassSymbol> { it.classKind != KaClassKind.INTERFACE }
+
 
 private val SUPPORTED_SYMBOL_ORIGINS = setOf(KaSymbolOrigin.SOURCE, KaSymbolOrigin.LIBRARY)

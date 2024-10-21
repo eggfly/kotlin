@@ -1,33 +1,7 @@
 // KIND: STANDALONE
 // MODULE: main
 // FILE: main.kt
-
-class normalT {
-    fun normalF() = Unit
-    val normalV: Unit get() = Unit
-    class normalT
-
-    @Deprecated("Deprecated")
-    fun deprecatedF() = Unit
-    @Deprecated("Deprecated")
-    val deprecatedV: Unit get() = Unit
-    @Deprecated("Deprecated")
-    class deprecatedT
-
-    @Deprecated("Obsoleted", level = DeprecationLevel.ERROR)
-    fun obsoletedF() = Unit
-    @Deprecated("Obsoleted", level = DeprecationLevel.ERROR)
-    val obsoletedV: Unit get() = Unit
-    @Deprecated("Obsoleted", level = DeprecationLevel.ERROR)
-    class obsoletedT
-
-    @Deprecated("Removed", level = DeprecationLevel.HIDDEN)
-    fun removedF() = Unit
-    @Deprecated("Removed", level = DeprecationLevel.HIDDEN)
-    val removedV: Unit get() = Unit
-    @Deprecated("Removed", level = DeprecationLevel.HIDDEN)
-    class removedT
-}
+@file:Suppress("DEPRECATION_ERROR")
 
 @Deprecated("Deprecated")
 fun deprecatedImplicitlyF() = Unit
@@ -52,32 +26,155 @@ typealias renamedA = Unit
 @Deprecated("Deprecated", replaceWith = ReplaceWith("renamed"))
 class renamedT
 
-@Deprecated("Foo deprecated")
-class deprecatedT {
-    fun deprecationInheritedF() = Unit
-    val deprecationInheritedV: Unit get() = Unit
-    class deprecationInheritedT
+open class normalT {
+    open class normalT
+    open fun normalF() = Unit
+    open val normalV: Unit get() = Unit
+    open var normalP: Int
+        get() = 42
+        set(new) {}
+
+    open fun deprecatedInFutureF() = Unit
+    open val deprecatedInFutureV: Unit get() = Unit
+    open var deprecatedInFutureP: Int
+        get() = 42
+        set(new) {}
+
+    open fun obsoletedInFutureF() = Unit
+    open val obsoletedInFutureV: Unit get() = Unit
+    open var obsoletedInFutureP: Int
+        get() = 42
+        set(new) {}
+
+    open fun removedInFutureF() = Unit
+    open val removedInFutureV: Unit get() = Unit
+    open var removedInFutureP: Int
+        get() = 42
+        set(new) {}
 
     @Deprecated("Deprecated")
-    fun deprecationRestatedF() = Unit
+    open class deprecatedT
     @Deprecated("Deprecated")
-    val deprecationRestatedV: Unit get() = Unit
+    constructor(deprecated: Int) {}
     @Deprecated("Deprecated")
-    class deprecationRestatedT
+    open fun deprecatedF() = Unit
+    @Deprecated("Deprecated")
+    open val deprecatedV: Unit get() = Unit
+    open var deprecatedP: Int
+        @Deprecated("Deprecated") get() = 42
+        @Deprecated("Deprecated") set(new) {}
 
     @Deprecated("Obsoleted", level = DeprecationLevel.ERROR)
-    fun deprecationReinforcedF() = Unit
+    open class obsoletedT
     @Deprecated("Obsoleted", level = DeprecationLevel.ERROR)
-    val deprecationReinforcedV: Unit get() = Unit
+    constructor(obsoleted: Float) {}
     @Deprecated("Obsoleted", level = DeprecationLevel.ERROR)
-    class deprecationReinforcedT
+    open fun obsoletedF() = Unit
+    @Deprecated("Obsoleted", level = DeprecationLevel.ERROR)
+    open val obsoletedV: Unit get() = Unit
+    open var obsoletedP: Int
+        @Deprecated("Obsoleted", level = DeprecationLevel.ERROR) get() = 42
+        @Deprecated("Obsoleted", level = DeprecationLevel.ERROR) set(new) {}
 
     @Deprecated("Removed", level = DeprecationLevel.HIDDEN)
-    fun deprecationFurtherReinforcedF() = Unit
+    open class removedT
     @Deprecated("Removed", level = DeprecationLevel.HIDDEN)
-    val deprecationFurtherReinforcedV: Unit get() = Unit
+    constructor(removed: Boolean) {}
     @Deprecated("Removed", level = DeprecationLevel.HIDDEN)
-    class deprecationFurtherReinforcedT
+    open fun removedF() = Unit
+    @Deprecated("Removed", level = DeprecationLevel.HIDDEN)
+    open val removedV: Unit get() = Unit
+    open var removedP: Int
+        @Deprecated("Removed", level = DeprecationLevel.HIDDEN) get() = 42
+        @Deprecated("Removed", level = DeprecationLevel.HIDDEN) set(new) {}
+}
+
+class normalChildT : normalT() {
+    override fun normalF() = Unit
+    override val normalV: Unit get() = Unit
+
+    @Deprecated("Deprecated", level = DeprecationLevel.WARNING)
+    override fun deprecatedInFutureF() = Unit
+    @Deprecated("Deprecated", level = DeprecationLevel.WARNING)
+    override val deprecatedInFutureV: Unit get() = Unit
+    @Deprecated("Deprecated", level = DeprecationLevel.WARNING)
+    override var deprecatedInFutureP: Int
+        @Deprecated("Deprecated", level = DeprecationLevel.WARNING) get() = 43
+        @Deprecated("Deprecated", level = DeprecationLevel.WARNING) set(new) {}
+
+    @Deprecated("Obsoleted", level = DeprecationLevel.ERROR)
+    override fun obsoletedInFutureF() = Unit
+    @Deprecated("Obsoleted", level = DeprecationLevel.ERROR)
+    override val obsoletedInFutureV: Unit get() = Unit
+    @Deprecated("Deprecated", level = DeprecationLevel.ERROR)
+    override var obsoletedInFutureP: Int
+        @Deprecated("Deprecated", level = DeprecationLevel.ERROR) get() = 43
+        @Deprecated("Deprecated", level = DeprecationLevel.ERROR) set(new) {}
+
+    @Deprecated("Removed", level = DeprecationLevel.HIDDEN)
+    override fun removedInFutureF() = Unit
+    @Deprecated("Removed", level = DeprecationLevel.HIDDEN)
+    override val removedInFutureV: Unit get() = Unit
+    @Deprecated("Deprecated", level = DeprecationLevel.HIDDEN)
+    override var removedInFutureP: Int
+        @Deprecated("Deprecated", level = DeprecationLevel.HIDDEN) get() = 43
+        @Deprecated("Deprecated", level = DeprecationLevel.HIDDEN) set(new) {}
+
+    override fun deprecatedF() = Unit
+    override val deprecatedV: Unit get() = Unit
+    override var deprecatedP: Int
+        @Deprecated("Deprecated") get() = 42
+        @Deprecated("Deprecated") set(new) {}
+
+    override fun obsoletedF() = Unit
+    override val obsoletedV: Unit get() = Unit
+    override var obsoletedP: Int
+        @Deprecated("Obsoleted", level = DeprecationLevel.ERROR) get() = 42
+        @Deprecated("Obsoleted", level = DeprecationLevel.ERROR) set(new) {}
+
+
+    override fun removedF() = Unit
+    override val removedV: Unit get() = Unit
+    override var removedP: Int
+        @Deprecated("Removed", level = DeprecationLevel.HIDDEN) get() = 42
+        @Deprecated("Removed", level = DeprecationLevel.HIDDEN) set(new) {}
+}
+
+@Deprecated("Deprecated")
+open class deprecatedT {
+    open fun deprecationInheritedF() = Unit
+    open val deprecationInheritedV: Unit get() = Unit
+    open class deprecationInheritedT
+
+    @Deprecated("Deprecated")
+    open class deprecationRestatedT
+    @Deprecated("Deprecated")
+    open fun deprecationRestatedF() = Unit
+    @Deprecated("Deprecated")
+    open val deprecationRestatedV: Unit get() = Unit
+
+    @Deprecated("Obsoleted", level = DeprecationLevel.ERROR)
+    open class deprecationReinforcedT
+    @Deprecated("Obsoleted", level = DeprecationLevel.ERROR)
+    open fun deprecationReinforcedF() = Unit
+    @Deprecated("Obsoleted", level = DeprecationLevel.ERROR)
+    open val deprecationReinforcedV: Unit get() = Unit
+
+    @Deprecated("Removed", level = DeprecationLevel.HIDDEN)
+    open class deprecationFurtherReinforcedT
+    @Deprecated("Removed", level = DeprecationLevel.HIDDEN)
+    open fun deprecationFurtherReinforcedF() = Unit
+    @Deprecated("Removed", level = DeprecationLevel.HIDDEN)
+    open val deprecationFurtherReinforcedV: Unit get() = Unit
+}
+
+class deprecatedChildT : deprecatedT() {
+    override fun deprecationRestatedF() = Unit
+    override val deprecationRestatedV: Unit get() = Unit
+    override fun deprecationReinforcedF() = Unit
+    override val deprecationReinforcedV: Unit get() = Unit
+    override fun deprecationFurtherReinforcedF() = Unit
+    override val deprecationFurtherReinforcedV: Unit get() = Unit
 }
 
 @Deprecated("Obsoleted", level = DeprecationLevel.ERROR)
@@ -87,32 +184,41 @@ val obsoletedV: Unit get() = Unit
 @Deprecated("Obsoleted", level = DeprecationLevel.ERROR)
 typealias obsoletedA = Unit
 
-@Deprecated("Bar obsoleted", level = DeprecationLevel.ERROR)
-class obsoletedT {
-    fun deprecationInheritedF() = Unit
-    val deprecationInheritedV: Unit get() = Unit
-    class deprecationInheritedT
+@Deprecated("Obsoleted", level = DeprecationLevel.ERROR)
+open class obsoletedT {
+    open fun deprecationInheritedF() = Unit
+    open val deprecationInheritedV: Unit get() = Unit
+    open class deprecationInheritedT
 
     @Deprecated("Deprecated")
-    fun deprecationRelaxedF() = Unit
+    open class deprecationRelaxedT
     @Deprecated("Deprecated")
-    val deprecationRelaxedV: Unit get() = Unit
+    open fun deprecationRelaxedF() = Unit
     @Deprecated("Deprecated")
-    class deprecationRelaxedT
+    open val deprecationRelaxedV: Unit get() = Unit
 
     @Deprecated("Obsoleted", level = DeprecationLevel.ERROR)
-    fun deprecationRestatedF() = Unit
+    open class deprecationRestatedT
     @Deprecated("Obsoleted", level = DeprecationLevel.ERROR)
-    val deprecationRestatedV: Unit get() = Unit
+    open fun deprecationRestatedF() = Unit
     @Deprecated("Obsoleted", level = DeprecationLevel.ERROR)
-    class deprecationRestatedT
+    open val deprecationRestatedV: Unit get() = Unit
 
     @Deprecated("Removed", level = DeprecationLevel.HIDDEN)
-    fun deprecationReinforcedF() = Unit
+    open class deprecationReinforcedT
     @Deprecated("Removed", level = DeprecationLevel.HIDDEN)
-    val deprecationReinforcedV: Unit get() = Unit
+    open fun deprecationReinforcedF() = Unit
     @Deprecated("Removed", level = DeprecationLevel.HIDDEN)
-    class deprecationReinforcedT
+    open val deprecationReinforcedV: Unit get() = Unit
+}
+
+open class obsoletedChildT : obsoletedT() {
+    override fun deprecationRelaxedF() = Unit
+    override val deprecationRelaxedV: Unit get() = Unit
+    override fun deprecationRestatedF() = Unit
+    override val deprecationRestatedV: Unit get() = Unit
+    override fun deprecationReinforcedF() = Unit
+    override val deprecationReinforcedV: Unit get() = Unit
 }
 
 @Deprecated("Hidden", level = DeprecationLevel.HIDDEN)
@@ -122,30 +228,39 @@ val hiddenV: Unit get() = Unit
 @Deprecated("Hidden", level = DeprecationLevel.HIDDEN)
 typealias hiddenA = Unit
 
-@Deprecated("Bar obsoleted", level = DeprecationLevel.HIDDEN)
-class hiddenT {
-    fun deprecationInheritedF() = Unit
-    val deprecationInheritedV: Unit get() = Unit
-    class deprecationInheritedT
+@Deprecated("Removed", level = DeprecationLevel.HIDDEN)
+open class hiddenT() {
+    open fun deprecationInheritedF() = Unit
+    open val deprecationInheritedV: Unit get() = Unit
+    open class deprecationInheritedT
 
     @Deprecated("Deprecated")
-    fun deprecationFurtherRelaxedF() = Unit
+    open class deprecationFurtherRelaxedT
     @Deprecated("Deprecated")
-    val deprecationFurtherRelaxedV: Unit get() = Unit
+    open fun deprecationFurtherRelaxedF() = Unit
     @Deprecated("Deprecated")
-    class deprecationFurtherRelaxedT
+    open val deprecationFurtherRelaxedV: Unit get() = Unit
 
     @Deprecated("Obsoleted", level = DeprecationLevel.ERROR)
-    fun deprecationRelaxedF() = Unit
+    open class deprecationRelaxedT
     @Deprecated("Obsoleted", level = DeprecationLevel.ERROR)
-    val deprecationRelaxedV: Unit get() = Unit
+    open fun deprecationRelaxedF() = Unit
     @Deprecated("Obsoleted", level = DeprecationLevel.ERROR)
-    class deprecationRelaxedT
+    open val deprecationRelaxedV: Unit get() = Unit
 
     @Deprecated("Removed", level = DeprecationLevel.HIDDEN)
-    fun deprecationRestatedF() = Unit
+    open class deprecationRestatedT
     @Deprecated("Removed", level = DeprecationLevel.HIDDEN)
-    val deprecationRestatedV: Unit get() = Unit
+    open fun deprecationRestatedF() = Unit
     @Deprecated("Removed", level = DeprecationLevel.HIDDEN)
-    class deprecationRestatedT
+    open val deprecationRestatedV: Unit get() = Unit
+}
+
+open class hiddenСhildT : hiddenT() {
+    override fun deprecationFurtherRelaxedF() = Unit
+    override val deprecationFurtherRelaxedV: Unit get() = Unit
+    override fun deprecationRelaxedF() = Unit
+    override val deprecationRelaxedV: Unit get() = Unit
+    override fun deprecationRestatedF() = Unit
+    override val deprecationRestatedV: Unit get() = Unit
 }

@@ -1,6 +1,10 @@
 #include <Foundation/Foundation.h>
 #include <stdint.h>
 
+uintptr_t __root___deprecatedChildT_init_allocate();
+
+void __root___deprecatedChildT_init_initialize__TypesOfArguments__Swift_UInt__(uintptr_t __kt);
+
 void __root___deprecatedF();
 
 void __root___deprecatedImplicitlyF();
@@ -13,15 +17,15 @@ void __root___deprecationInheritedImplicitlyV_get();
 
 void __root___deprecationInheritedV_get();
 
+uintptr_t __root___normalChildT_init_allocate();
+
+void __root___normalChildT_init_initialize__TypesOfArguments__Swift_UInt__(uintptr_t __kt);
+
 uintptr_t __root___normalT_init_allocate();
 
 void __root___normalT_init_initialize__TypesOfArguments__Swift_UInt__(uintptr_t __kt);
 
 void __root___obsoletedF();
-
-uintptr_t __root___obsoletedT_init_allocate();
-
-void __root___obsoletedT_init_initialize__TypesOfArguments__Swift_UInt__(uintptr_t __kt);
 
 void __root___obsoletedV_get();
 
@@ -33,6 +37,18 @@ void __root___renamedT_init_initialize__TypesOfArguments__Swift_UInt__(uintptr_t
 
 void __root___renamedV_get();
 
+void deprecatedChildT_deprecationFurtherReinforcedF(uintptr_t self);
+
+void deprecatedChildT_deprecationFurtherReinforcedV_get(uintptr_t self);
+
+void deprecatedChildT_deprecationReinforcedF(uintptr_t self);
+
+void deprecatedChildT_deprecationReinforcedV_get(uintptr_t self);
+
+void deprecatedChildT_deprecationRestatedF(uintptr_t self);
+
+void deprecatedChildT_deprecationRestatedV_get(uintptr_t self);
+
 void deprecatedT_deprecationInheritedF(uintptr_t self);
 
 uintptr_t deprecatedT_deprecationInheritedT_init_allocate();
@@ -42,10 +58,6 @@ void deprecatedT_deprecationInheritedT_init_initialize__TypesOfArguments__Swift_
 void deprecatedT_deprecationInheritedV_get(uintptr_t self);
 
 void deprecatedT_deprecationReinforcedF(uintptr_t self);
-
-uintptr_t deprecatedT_deprecationReinforcedT_init_allocate();
-
-void deprecatedT_deprecationReinforcedT_init_initialize__TypesOfArguments__Swift_UInt__(uintptr_t __kt);
 
 void deprecatedT_deprecationReinforcedV_get(uintptr_t self);
 
@@ -57,15 +69,71 @@ void deprecatedT_deprecationRestatedT_init_initialize__TypesOfArguments__Swift_U
 
 void deprecatedT_deprecationRestatedV_get(uintptr_t self);
 
+void normalChildT_deprecatedF(uintptr_t self);
+
+void normalChildT_deprecatedInFutureF(uintptr_t self);
+
+int32_t normalChildT_deprecatedInFutureP_get(uintptr_t self);
+
+void normalChildT_deprecatedInFutureP_set__TypesOfArguments__Swift_Int32__(uintptr_t self, int32_t newValue);
+
+void normalChildT_deprecatedInFutureV_get(uintptr_t self);
+
+int32_t normalChildT_deprecatedP_get(uintptr_t self);
+
+void normalChildT_deprecatedP_set__TypesOfArguments__Swift_Int32__(uintptr_t self, int32_t newValue);
+
+void normalChildT_deprecatedV_get(uintptr_t self);
+
+void normalChildT_normalF(uintptr_t self);
+
+void normalChildT_normalV_get(uintptr_t self);
+
+void normalChildT_obsoletedF(uintptr_t self);
+
+void normalChildT_obsoletedInFutureF(uintptr_t self);
+
+int32_t normalChildT_obsoletedInFutureP_get(uintptr_t self);
+
+void normalChildT_obsoletedInFutureP_set__TypesOfArguments__Swift_Int32__(uintptr_t self, int32_t newValue);
+
+void normalChildT_obsoletedInFutureV_get(uintptr_t self);
+
+int32_t normalChildT_obsoletedP_get(uintptr_t self);
+
+void normalChildT_obsoletedP_set__TypesOfArguments__Swift_Int32__(uintptr_t self, int32_t newValue);
+
+void normalChildT_obsoletedV_get(uintptr_t self);
+
+void normalChildT_removedF(uintptr_t self);
+
+void normalChildT_removedV_get(uintptr_t self);
+
 void normalT_deprecatedF(uintptr_t self);
+
+void normalT_deprecatedInFutureF(uintptr_t self);
+
+int32_t normalT_deprecatedInFutureP_get(uintptr_t self);
+
+void normalT_deprecatedInFutureP_set__TypesOfArguments__Swift_Int32__(uintptr_t self, int32_t newValue);
+
+void normalT_deprecatedInFutureV_get(uintptr_t self);
+
+int32_t normalT_deprecatedP_get(uintptr_t self);
+
+void normalT_deprecatedP_set__TypesOfArguments__Swift_Int32__(uintptr_t self, int32_t newValue);
 
 uintptr_t normalT_deprecatedT_init_allocate();
 
-void normalT_deprecatedT_init_initialize__TypesOfArguments__Swift_UInt__(uintptr_t __kt);
+void normalT_deprecatedT_init_initialize__TypesOfArguments__Swift_UInt_Swift_Int32__(uintptr_t __kt, int32_t deprecated);
 
 void normalT_deprecatedV_get(uintptr_t self);
 
 void normalT_normalF(uintptr_t self);
+
+int32_t normalT_normalP_get(uintptr_t self);
+
+void normalT_normalP_set__TypesOfArguments__Swift_Int32__(uintptr_t self, int32_t newValue);
 
 uintptr_t normalT_normalT_init_allocate();
 
@@ -75,33 +143,25 @@ void normalT_normalV_get(uintptr_t self);
 
 void normalT_obsoletedF(uintptr_t self);
 
-uintptr_t normalT_obsoletedT_init_allocate();
+void normalT_obsoletedInFutureF(uintptr_t self);
 
-void normalT_obsoletedT_init_initialize__TypesOfArguments__Swift_UInt__(uintptr_t __kt);
+int32_t normalT_obsoletedInFutureP_get(uintptr_t self);
+
+void normalT_obsoletedInFutureP_set__TypesOfArguments__Swift_Int32__(uintptr_t self, int32_t newValue);
+
+void normalT_obsoletedInFutureV_get(uintptr_t self);
+
+int32_t normalT_obsoletedP_get(uintptr_t self);
+
+void normalT_obsoletedP_set__TypesOfArguments__Swift_Int32__(uintptr_t self, int32_t newValue);
 
 void normalT_obsoletedV_get(uintptr_t self);
 
-void obsoletedT_deprecationInheritedF(uintptr_t self);
+void normalT_removedInFutureF(uintptr_t self);
 
-uintptr_t obsoletedT_deprecationInheritedT_init_allocate();
+int32_t normalT_removedInFutureP_get(uintptr_t self);
 
-void obsoletedT_deprecationInheritedT_init_initialize__TypesOfArguments__Swift_UInt__(uintptr_t __kt);
+void normalT_removedInFutureP_set__TypesOfArguments__Swift_Int32__(uintptr_t self, int32_t newValue);
 
-void obsoletedT_deprecationInheritedV_get(uintptr_t self);
-
-void obsoletedT_deprecationRelaxedF(uintptr_t self);
-
-uintptr_t obsoletedT_deprecationRelaxedT_init_allocate();
-
-void obsoletedT_deprecationRelaxedT_init_initialize__TypesOfArguments__Swift_UInt__(uintptr_t __kt);
-
-void obsoletedT_deprecationRelaxedV_get(uintptr_t self);
-
-void obsoletedT_deprecationRestatedF(uintptr_t self);
-
-uintptr_t obsoletedT_deprecationRestatedT_init_allocate();
-
-void obsoletedT_deprecationRestatedT_init_initialize__TypesOfArguments__Swift_UInt__(uintptr_t __kt);
-
-void obsoletedT_deprecationRestatedV_get(uintptr_t self);
+void normalT_removedInFutureV_get(uintptr_t self);
 
