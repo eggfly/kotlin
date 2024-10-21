@@ -20,11 +20,9 @@ import org.jetbrains.kotlin.psi.KtClassInitializer
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtEnumEntry
-import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtParameter
 import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.kotlin.psi.KtPropertyAccessor
-import org.jetbrains.kotlin.psi.KtPropertyDelegate
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 
 internal object PsiBasedContainingClassCalculator {
@@ -61,9 +59,7 @@ internal object PsiBasedContainingClassCalculator {
                     }
 
                     if (kind == DelegatedPropertyAccessor) {
-                        val delegateExpression = source.psi as? KtExpression
-                        val containingDelegate = delegateExpression?.parent as? KtPropertyDelegate
-                        val containingProperty = containingDelegate?.parent as? KtProperty
+                        val containingProperty = source.psi as? KtProperty
                         return computeContainingClass(symbol, containingProperty?.containingClassOrObject)
                     }
 
