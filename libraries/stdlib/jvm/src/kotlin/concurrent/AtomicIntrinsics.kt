@@ -3,7 +3,7 @@
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
-@file:Suppress("EXTENSION_SHADOWED_BY_MEMBER", "NEWER_VERSION_IN_SINCE_KOTLIN")
+@file:Suppress("EXTENSION_SHADOWED_BY_MEMBER")
 package kotlin.concurrent
 
 /**
