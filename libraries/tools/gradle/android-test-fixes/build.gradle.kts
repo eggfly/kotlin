@@ -10,13 +10,13 @@ repositories {
 
 dependencies {
     commonCompileOnly(gradleKotlinDsl())
-    commonCompileOnly("com.android.tools.build:gradle:3.6.4") {
+    commonCompileOnly(libs.android.gradle.plugin.gradle) {
         isTransitive = false
     }
-    commonCompileOnly("com.android.tools.build:builder:3.6.4") {
+    commonCompileOnly(libs.android.gradle.plugin.builder) {
         isTransitive = false
     }
-    commonCompileOnly("com.android.tools.build:builder-model:3.6.4") {
+    commonCompileOnly(libs.android.gradle.plugin.builder.model) {
         isTransitive = false
     }
 }
