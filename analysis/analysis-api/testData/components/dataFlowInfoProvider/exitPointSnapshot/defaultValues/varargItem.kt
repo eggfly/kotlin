@@ -1,0 +1,1 @@
+fun getNullableList(): List<String?> = listOf(<expr>"Hello"</expr>, null, "World")
