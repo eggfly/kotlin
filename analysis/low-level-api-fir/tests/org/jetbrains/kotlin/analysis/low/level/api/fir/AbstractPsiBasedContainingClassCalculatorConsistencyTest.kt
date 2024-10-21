@@ -9,6 +9,7 @@ import org.jetbrains.kotlin.analysis.low.level.api.fir.AbstractPsiBasedContainin
 import org.jetbrains.kotlin.analysis.low.level.api.fir.api.getFirResolveSession
 import org.jetbrains.kotlin.analysis.low.level.api.fir.api.getOrBuildFirFile
 import org.jetbrains.kotlin.analysis.low.level.api.fir.providers.LLFirProvider
+import org.jetbrains.kotlin.analysis.low.level.api.fir.test.configurators.AnalysisApiFirScriptTestConfigurator
 import org.jetbrains.kotlin.analysis.low.level.api.fir.test.configurators.AnalysisApiFirSourceTestConfigurator
 import org.jetbrains.kotlin.analysis.low.level.api.fir.util.PsiBasedContainingClassCalculator
 import org.jetbrains.kotlin.analysis.test.framework.base.AbstractAnalysisApiBasedTest
@@ -30,8 +31,6 @@ import kotlin.test.assertEquals
 import kotlin.test.fail
 
 abstract class AbstractPsiBasedContainingClassCalculatorConsistencyTest : AbstractAnalysisApiBasedTest() {
-    override val configurator = AnalysisApiFirSourceTestConfigurator(analyseInDependentSession = false)
-
     override fun configureTest(builder: TestConfigurationBuilder) {
         super.configureTest(builder)
         builder.useDirectives(Directives)
@@ -93,4 +92,12 @@ abstract class AbstractPsiBasedContainingClassCalculatorConsistencyTest : Abstra
     object Directives : SimpleDirectivesContainer() {
         val ALLOW_PSI_PRESENCE by stringDirective("Do not fail the test if the containing class can be calculated only by PSI")
     }
+}
+
+abstract class AbstractSourcePsiBasedContainingClassCalculatorConsistencyTest : AbstractPsiBasedContainingClassCalculatorConsistencyTest() {
+    override val configurator = AnalysisApiFirSourceTestConfigurator(analyseInDependentSession = false)
+}
+
+abstract class AbstractScriptPsiBasedContainingClassCalculatorConsistencyTest : AbstractPsiBasedContainingClassCalculatorConsistencyTest() {
+    override val configurator = AnalysisApiFirScriptTestConfigurator(analyseInDependentSession = false)
 }
