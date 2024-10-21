@@ -9,7 +9,6 @@ import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.KtFakeSourceElementKind
 import org.jetbrains.kotlin.KtFakeSourceElementKind.*
 import org.jetbrains.kotlin.KtPsiSourceElement
-import org.jetbrains.kotlin.analysis.low.level.api.fir.LLFirInternals
 import org.jetbrains.kotlin.analysis.low.level.api.fir.api.getFirResolveSession
 import org.jetbrains.kotlin.analysis.low.level.api.fir.api.resolveToFirSymbolOfTypeSafe
 import org.jetbrains.kotlin.analysis.low.level.api.fir.projectStructure.llFirModuleData
@@ -28,8 +27,7 @@ import org.jetbrains.kotlin.psi.KtPropertyAccessor
 import org.jetbrains.kotlin.psi.KtPropertyDelegate
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 
-@LLFirInternals
-object PsiBasedContainingClassCalculator {
+internal object PsiBasedContainingClassCalculator {
     /**
      * Returns a containing class symbol for the given symbol, computing it solely from the source information.
      */
