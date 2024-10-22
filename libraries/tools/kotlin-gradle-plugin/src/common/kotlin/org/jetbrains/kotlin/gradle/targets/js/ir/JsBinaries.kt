@@ -189,10 +189,12 @@ interface WasmBinary {
     val optimizeTask: TaskProvider<BinaryenExec>
 }
 
-internal fun WasmBinary.configureOptimizeTask(taskProvider: TaskProvider<BinaryenExec>) {
-    val target = compilation.target as KotlinJsIrTarget
+internal fun TaskProvider<BinaryenExec>.configureOptimizeTask(binary: WasmBinary) {
+    val target = binary.compilation.target as KotlinJsIrTarget
+    val compilation = binary.compilation
 
-    taskProvider.configure { task ->
+    configure { task ->
+        val linkTask = binary.linkTask
         val compiledWasmFile = linkTask.flatMap { link ->
             link.destinationDirectory.locationOnly.zip(link.compilerOptions.moduleName) { destDir, moduleName ->
                 destDir.file("$moduleName.wasm")
@@ -202,7 +204,7 @@ internal fun WasmBinary.configureOptimizeTask(taskProvider: TaskProvider<Binarye
         task.dependsOn(linkTask)
         task.inputFileProperty.set(compiledWasmFile)
 
-        val outputDirectory: Provider<Directory> = outputDirBase
+        val outputDirectory: Provider<Directory> = binary.outputDirBase
             .map { it.dir("optimized") }
 
         task.outputDirectory.set(outputDirectory)
@@ -212,10 +214,10 @@ internal fun WasmBinary.configureOptimizeTask(taskProvider: TaskProvider<Binarye
         )
     }
 
-    if (compilation.isMain() && mode == KotlinJsBinaryMode.PRODUCTION) {
+    if (compilation.isMain() && binary.mode == KotlinJsBinaryMode.PRODUCTION) {
         if (target.wasmTargetType == KotlinWasmTargetType.WASI) {
             val project = target.project
-            project.tasks.named(LifecycleBasePlugin.ASSEMBLE_TASK_NAME).dependsOn(taskProvider)
+            project.tasks.named(LifecycleBasePlugin.ASSEMBLE_TASK_NAME).dependsOn(this)
         }
     }
 }
@@ -275,7 +277,7 @@ class ExecutableWasm(
             }
         }
     }.also { binaryenExec ->
-        configureOptimizeTask(binaryenExec)
+        binaryenExec.configureOptimizeTask(this)
     }
 
     val mainOptimizedFile: Provider<RegularFile> = optimizeTask.flatMap {
@@ -332,7 +334,7 @@ class LibraryWasm(
             }
         }
     }.also { binaryenExec ->
-        configureOptimizeTask(binaryenExec)
+        binaryenExec.configureOptimizeTask(this)
     }
 
     private fun optimizeTaskName(): String =
