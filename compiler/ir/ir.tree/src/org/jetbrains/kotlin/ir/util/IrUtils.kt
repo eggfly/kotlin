@@ -1559,8 +1559,7 @@ fun IrModuleFragment.addFile(file: IrFile) {
 }
 
 fun IrFunctionAccessExpression.receiverAndArgs(): List<IrExpression> {
-    return (arrayListOf(this.dispatchReceiver, this.extensionReceiver) +
-            symbol.owner.valueParameters.mapIndexed { i, _ -> getValueArgument(i) }).filterNotNull()
+    return arguments.filterNotNull()
 }
 
 val IrFunction.propertyIfAccessor: IrDeclaration
