@@ -626,9 +626,9 @@ open class DeepCopyIrTreeWithSymbols(
         }
 
     protected fun <T : IrMemberAccessExpression<*>> T.transformValueArguments(original: T) {
-        transformReceiverArguments(original)
-        for (i in 0 until original.valueArgumentsCount) {
-            putValueArgument(i, original.getValueArgument(i)?.transform())
+        arguments.clear()
+        original.arguments.forEach {
+            arguments.add(it?.transform())
         }
     }
 
