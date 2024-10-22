@@ -39,28 +39,28 @@ object GenericSignatureMapper {
         }
     }
 
-    // Change generic signatures of remapped Kotlin builtins for Java interoperability.
-    //
-    // There are a few Kotlin builtins which are mapped to methods with different generic signatures in Java.
-    // For example, `MutableMap<K, V>` contains the following method.
-    //
-    //   remove(key: K): V
-    //
-    // This is mapped to a method with the same name in `java.util.Map` but with the following signature.
-    //
-    //   V remove(Object key)
-    //
-    // If we instantiate `K` with some type that erases to `Object` then the Java compiler will see the
-    // `remove` method as an override of the corresponding method in `java.util.Map`. This leads to a check
-    // that it is a valid override according to the Java language rules, i.e., that the parameter types
-    // are the same and the return type of the override is a subtype of the return type of the declaration.
-    //
-    // This check will fail if we generate a generic signature for the Kotlin declaration, since `K` is not
-    // the same type as `Object`. Similarly, we cannot just omit the generic signature, since otherwise the
-    // check would fail as `Object` is not a subtype of `V`.
-    //
-    // Instead, we have to produce a generic signature matching what Java expects. This is not a problem for
-    // Kotlin code, since we record the correct types in the Kotlin metadata.
+    /**
+     * Change generic signatures of remapped Kotlin builtins for Java interoperability.
+     *
+     * There are a few Kotlin builtins which are mapped to methods with different generic signatures in Java. For example,
+     * `MutableMap<K, V>` contains the following method.
+     *
+     *     fun remove(key: K): V
+     *
+     * This is mapped to a method with the same name in `java.util.Map` but with the following signature.
+     *
+     *     V remove(Object key)
+     *
+     * If we instantiate `K` with some type that erases to `Object` then the Java compiler will see the `remove` method as an override of
+     * the corresponding method in `java.util.Map`. This leads to a check that it is a valid override according to the Java language rules,
+     * i.e., that the parameter types are the same and the return type of the override is a subtype of the return type of the declaration.
+     *
+     * This check will fail if we generate a generic signature for the Kotlin declaration, since `K` is not the same type as `Object`.
+     * Similarly, we cannot just omit the generic signature, since otherwise the check would fail as `Object` is not a subtype of `V`.
+     *
+     * Instead, we have to produce a generic signature matching what Java expects. This is not a problem for Kotlin code, since we record
+     * the correct types in the Kotlin metadata.
+     */
     fun mapSignature(irFunction: IrSimpleFunction, genericSignature: JvmMethodGenericSignature): JvmMethodGenericSignature {
         val signature = genericSignature.genericsSignature
             ?: return genericSignature
