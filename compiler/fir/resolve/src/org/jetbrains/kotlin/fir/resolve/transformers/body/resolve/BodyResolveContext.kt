@@ -316,10 +316,18 @@ class BodyResolveContext(
 
     // ANALYSIS PUBLIC API
 
+    /**
+     * To be used in contexts, where pure primary constructor parameters are accessible, e.g., property initializers.
+     * In primary constructor itself create new scope using [buildConstructorParametersScope].
+     */
     @OptIn(PrivateForInline::class)
     fun getPrimaryConstructorPureParametersScope(): FirLocalScope? =
         regularTowerDataContexts.primaryConstructorPureParametersScope
 
+    /**
+     * To be used in contexts, where primary constructor parameters are accessible, e.g., supertype delegate expression.
+     * In primary constructor itself create new scope using [buildConstructorParametersScope].
+     */
     @OptIn(PrivateForInline::class)
     fun getPrimaryConstructorAllParametersScope(): FirLocalScope? =
         regularTowerDataContexts.primaryConstructorAllParametersScope
