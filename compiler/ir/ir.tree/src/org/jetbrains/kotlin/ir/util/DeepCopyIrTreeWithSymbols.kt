@@ -27,29 +27,3 @@ internal inline fun <T : IrElement> T.deepCopyImpl(createTypeRemapper: (SymbolRe
     val typeRemapper = createTypeRemapper(symbolRemapper)
     return transform(DeepCopyIrTreeWithSymbols(symbolRemapper, typeRemapper), null)
 }
-
-// TODO: remove
-//override fun visitSuspendableExpression(expression: IrSuspendableExpression): IrSuspendableExpression =
-//    IrSuspendableExpressionImpl(
-//        expression.startOffset, expression.endOffset,
-//        expression.type.remapType(),
-//        expression.suspensionPointId.transform(),
-//        expression.result.transform()
-//    )
-//
-//override fun visitSuspensionPoint(expression: IrSuspensionPoint): IrSuspensionPoint =
-//    IrSuspensionPointImpl(
-//        expression.startOffset, expression.endOffset,
-//        expression.type.remapType(),
-//        expression.suspensionPointIdParameter.transform(),
-//        expression.result.transform(),
-//        expression.resumeResult.transform()
-//    )
-
-//override fun visitConstantPrimitive(expression: IrConstantPrimitive): IrConstantValue =
-//    IrConstantPrimitiveImpl(
-//        expression.startOffset, expression.endOffset,
-//        expression.value.transform()
-//    ).processAttributes(expression).apply {
-//        this.type = expression.type.remapType()
-//    }
