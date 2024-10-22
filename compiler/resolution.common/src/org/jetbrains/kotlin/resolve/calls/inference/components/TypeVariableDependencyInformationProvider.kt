@@ -5,6 +5,8 @@
 
 package org.jetbrains.kotlin.resolve.calls.inference.components
 
+import org.jetbrains.kotlin.config.LanguageFeature
+import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.resolve.calls.inference.model.VariableWithConstraints
 import org.jetbrains.kotlin.resolve.calls.model.PostponedResolvedAtomMarker
 import org.jetbrains.kotlin.types.model.KotlinTypeMarker
@@ -17,7 +19,8 @@ class TypeVariableDependencyInformationProvider(
     private val notFixedTypeVariables: Map<TypeConstructorMarker, VariableWithConstraints>,
     private val postponedKtPrimitives: List<PostponedResolvedAtomMarker>,
     private val topLevelType: KotlinTypeMarker?,
-    private val typeSystemContext: VariableFixationFinder.Context
+    private val typeSystemContext: VariableFixationFinder.Context,
+    private val languageVersionSettings: LanguageVersionSettings,
 ) {
 
     private val outerTypeVariables: Set<TypeConstructorMarker>? =
@@ -54,7 +57,20 @@ class TypeVariableDependencyInformationProvider(
         relatedToTopLevelType.contains(variable)
 
 
-    fun isRelatedToOuterTypeVariable(variable: TypeConstructorMarker): Boolean = relatedToOuterTypeVariables?.contains(variable) == true
+    fun isRelatedToOuterTypeVariable(variable: TypeConstructorMarker): Boolean =
+        if (languageVersionSettings.supportsFeature(LanguageFeature.PCLAEnhancementsIn21))
+            relatedToOuterTypeVariables?.contains(variable) == true
+        else
+            oldIsRelatedToOuterTypeVariable(variable)
+
+    // This one shall be removed together with LV 2.0.
+    // The problem with this definition is that it doesn't consider Xv ~ Yv related if one of them is used inside an input type of
+    // postponed atom and another is used as an output type.
+    private fun oldIsRelatedToOuterTypeVariable(variable: TypeConstructorMarker): Boolean {
+        val outerTypeVariables = outerTypeVariables ?: return false
+        val myDependent = getDeeplyDependentVariables(variable) ?: return false
+        return myDependent.any { it in outerTypeVariables }
+    }
 
     fun isVariableRelatedToAnyOutputType(variable: TypeConstructorMarker) = relatedToAllOutputTypes.contains(variable)
 
