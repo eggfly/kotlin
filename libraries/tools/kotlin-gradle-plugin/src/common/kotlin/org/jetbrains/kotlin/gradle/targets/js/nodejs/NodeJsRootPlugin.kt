@@ -44,14 +44,17 @@ open class NodeJsRootPlugin : Plugin<Project> {
             NodeJsRootExtension.EXTENSION_NAME,
             NodeJsRootExtension::class.java,
             project,
-            { NodeJsPlugin.apply(project) }
+            { NodeJsPlugin.apply(project) },
+            "js",
+            null
         )
 
         val npm = project.extensions.create(
             NpmExtension.EXTENSION_NAME,
             NpmExtension::class.java,
             project,
-            nodeJsRoot
+            nodeJsRoot,
+            null
         )
 
         val nodeJs = NodeJsPlugin.apply(project)

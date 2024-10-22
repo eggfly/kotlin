@@ -40,7 +40,8 @@ open class YarnPlugin : Plugin<Project> {
             YarnRootExtension::class.java,
             this,
             nodeJsRoot,
-            yarnSpec
+            yarnSpec,
+            null
         )
 
         yarnSpec.initializeYarnEnvSpec(objects, yarnRootExtension)

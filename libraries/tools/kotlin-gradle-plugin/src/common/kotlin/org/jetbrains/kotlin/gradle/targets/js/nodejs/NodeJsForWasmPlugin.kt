@@ -21,7 +21,7 @@ open class NodeJsForWasmPlugin : Plugin<Project> {
             NodeJsRootForWasmPlugin.apply(project.rootProject)
         }
 
-        project.registerTask<NodeJsSetupTask>(NodeJsSetupTask.NAME, listOf(nodeJs)) {
+        project.registerTask<NodeJsSetupTask>(extensionName(NodeJsSetupTask.NAME), listOf(nodeJs)) {
             it.group = TASKS_GROUP_NAME
             it.description = "Download and install a local node/npm version"
             it.configuration = it.ivyDependencyProvider.map { ivyDependency ->
@@ -39,8 +39,9 @@ open class NodeJsForWasmPlugin : Plugin<Project> {
         val objects = objects
 
         return extensions.create(
-            NodeJsEnvSpec.EXTENSION_NAME,
-            NodeJsEnvSpec::class.java
+            extensionName(NodeJsEnvSpec.EXTENSION_NAME),
+            NodeJsEnvSpec::class.java,
+            "Wasm"
         ).apply {
             installationDirectory.convention(
                 objects.directoryProperty().fileProvider(
@@ -71,6 +72,9 @@ open class NodeJsForWasmPlugin : Plugin<Project> {
                 }
         ).disallowChanges()
     }
+
+    private fun extensionName(baseName: String): String =
+        baseName + "Wasm"
 
     companion object {
         const val TASKS_GROUP_NAME: String = "nodeJs"

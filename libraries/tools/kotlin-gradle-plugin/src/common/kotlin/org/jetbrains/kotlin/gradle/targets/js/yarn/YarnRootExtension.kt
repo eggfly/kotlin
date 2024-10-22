@@ -25,6 +25,7 @@ open class YarnRootExtension(
     val project: Project,
     val nodeJsRoot: NodeJsRootExtension,
     private val yarnSpec: YarnRootEnvSpec,
+    private val platformDisambiguate: String? = null,
 ) : AbstractSettings<YarnEnv>(), NpmApiExtension<YarnEnvironment, Yarn> {
     init {
         check(project == project.rootProject)
@@ -80,7 +81,7 @@ open class YarnRootExtension(
     val yarnSetupTaskProvider: TaskProvider<YarnSetupTask>
         get() = project.tasks
             .withType(YarnSetupTask::class.java)
-            .named(YarnSetupTask.NAME)
+            .named(platformDisambiguate?.let { YarnSetupTask.NAME + it } ?: YarnSetupTask.NAME)
 
     internal val platform: org.gradle.api.provider.Property<Platform> = project.objects.property(Platform::class.java)
 
@@ -106,10 +107,12 @@ open class YarnRootExtension(
     }
 
     val restoreYarnLockTaskProvider: TaskProvider<YarnLockCopyTask>
-        get() = project.tasks.withType(YarnLockCopyTask::class.java).named(RESTORE_YARN_LOCK_NAME)
+        get() = project.tasks.withType(YarnLockCopyTask::class.java)
+            .named(platformDisambiguate?.let { RESTORE_YARN_LOCK_NAME + it } ?: RESTORE_YARN_LOCK_NAME)
 
     val storeYarnLockTaskProvider: TaskProvider<YarnLockStoreTask>
-        get() = project.tasks.withType(YarnLockStoreTask::class.java).named(STORE_YARN_LOCK_NAME)
+        get() = project.tasks.withType(YarnLockStoreTask::class.java)
+            .named(platformDisambiguate?.let { STORE_YARN_LOCK_NAME + it } ?: STORE_YARN_LOCK_NAME)
 
     companion object {
         const val YARN: String = "kotlinYarn"

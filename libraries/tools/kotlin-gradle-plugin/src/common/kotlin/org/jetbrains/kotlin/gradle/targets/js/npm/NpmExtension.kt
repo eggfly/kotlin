@@ -21,7 +21,8 @@ import org.jetbrains.kotlin.gradle.targets.js.nodejs.NpmApiExtension
 
 open class NpmExtension(
     val project: Project,
-    val nodeJsRoot: NodeJsRootExtension
+    val nodeJsRoot: NodeJsRootExtension,
+    private val platformDisambiguate: String? = null,
 ) : ConfigurationPhaseAware<NpmEnv>(), NpmApiExtension<NpmEnvironment, Npm> {
     init {
         check(project == project.rootProject)
@@ -106,10 +107,10 @@ open class NpmExtension(
     }
 
     val restorePackageLockTaskProvider: TaskProvider<out Task>
-        get() = project.tasks.named(LockCopyTask.RESTORE_PACKAGE_LOCK_NAME)
+        get() = project.tasks.named(platformDisambiguate?.let { LockCopyTask.RESTORE_PACKAGE_LOCK_NAME + it } ?: LockCopyTask.RESTORE_PACKAGE_LOCK_NAME)
 
     val storePackageLockTaskProvider: TaskProvider<out Task>
-        get() = project.tasks.named(LockCopyTask.STORE_PACKAGE_LOCK_NAME)
+        get() = project.tasks.named(platformDisambiguate?.let { LockCopyTask.STORE_PACKAGE_LOCK_NAME + it } ?: LockCopyTask.STORE_PACKAGE_LOCK_NAME)
 
     companion object {
         const val EXTENSION_NAME: String = "kotlinNpm"

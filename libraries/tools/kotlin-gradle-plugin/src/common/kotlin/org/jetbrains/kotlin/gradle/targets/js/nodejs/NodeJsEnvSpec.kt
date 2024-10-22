@@ -17,7 +17,9 @@ import java.io.File
 /**
  * Spec for Node.js - common JS and Wasm runtime.
  */
-abstract class NodeJsEnvSpec : EnvSpec<NodeJsEnv>() {
+abstract class NodeJsEnvSpec(
+    private val platformDisambiguate: String? = null,
+) : EnvSpec<NodeJsEnv>() {
 
     /**
      * Specify a platform information with name and architecture
@@ -64,7 +66,8 @@ abstract class NodeJsEnvSpec : EnvSpec<NodeJsEnv>() {
     }
 
     val Project.nodeJsSetupTaskProvider: TaskProvider<out NodeJsSetupTask>
-        get() = project.tasks.withType(NodeJsSetupTask::class.java).named(NodeJsSetupTask.NAME)
+        get() = project.tasks.withType(NodeJsSetupTask::class.java)
+            .named(platformDisambiguate?.let { NodeJsSetupTask.NAME + it } ?: NodeJsSetupTask.NAME)
 
     companion object {
         const val EXTENSION_NAME: String = "kotlinNodeJsSpec"

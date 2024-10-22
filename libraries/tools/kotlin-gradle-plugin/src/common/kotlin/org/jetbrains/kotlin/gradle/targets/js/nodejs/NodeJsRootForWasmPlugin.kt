@@ -42,18 +42,20 @@ open class NodeJsRootForWasmPlugin : Plugin<Project> {
         project.plugins.apply(BasePlugin::class.java)
 
         val nodeJsRoot = project.extensions.create(
-            NodeJsRootExtension.EXTENSION_NAME,
+            extensionName(NodeJsRootExtension.EXTENSION_NAME),
             NodeJsRootExtension::class.java,
             project,
             { NodeJsForWasmPlugin.apply(project) },
-            "wasm"
+            "wasm",
+            "Wasm"
         )
 
         val npm = project.extensions.create(
-            NpmExtension.EXTENSION_NAME,
+            extensionName(NpmExtension.EXTENSION_NAME),
             NpmExtension::class.java,
             project,
-            nodeJsRoot
+            nodeJsRoot,
+            "Wasm"
         )
 
         val nodeJs = NodeJsForWasmPlugin.apply(project)
@@ -72,13 +74,13 @@ open class NodeJsRootForWasmPlugin : Plugin<Project> {
             nodeJsRoot.nodeModulesGradleCacheDirectory
         )
 
-        val setupFileHasherTask = project.registerTask<KotlinNpmCachesSetup>(KotlinNpmCachesSetup.NAME) {
+        val setupFileHasherTask = project.registerTask<KotlinNpmCachesSetup>(extensionName(KotlinNpmCachesSetup.NAME)) {
             it.description = "Setup file hasher for caches"
 
             it.gradleNodeModules.set(gradleNodeModulesProvider)
         }
 
-        val npmInstall = project.registerTask<KotlinNpmInstallTask>(KotlinNpmInstallTask.NAME) { npmInstall ->
+        val npmInstall = project.registerTask<KotlinNpmInstallTask>(extensionName(KotlinNpmInstallTask.NAME)) { npmInstall ->
             with(nodeJs) {
                 npmInstall.dependsOn(project.nodeJsSetupTaskProvider)
             }
@@ -98,7 +100,7 @@ open class NodeJsRootForWasmPlugin : Plugin<Project> {
             }
         }
 
-        project.registerTask<Task>(PACKAGE_JSON_UMBRELLA_TASK_NAME)
+        project.registerTask<Task>(extensionName(PACKAGE_JSON_UMBRELLA_TASK_NAME))
 
         nodeJsRoot.resolver = KotlinRootNpmResolver(
             project.name,
@@ -120,8 +122,8 @@ open class NodeJsRootForWasmPlugin : Plugin<Project> {
             nodeJsRoot.projectPackagesDirectory
         )
 
-        val rootPackageJson = project.tasks.register(RootPackageJsonTask.NAME, RootPackageJsonTask::class.java) { task ->
-            task.dependsOn(nodeJsRoot.npmCachesSetupTaskProvider)
+        val rootPackageJson = project.tasks.register(extensionName(RootPackageJsonTask.NAME), RootPackageJsonTask::class.java) { task ->
+            task.dependsOn(setupFileHasherTask)
             task.group = TASKS_GROUP_NAME
             task.description = "Create root package.json"
 
@@ -148,7 +150,7 @@ open class NodeJsRootForWasmPlugin : Plugin<Project> {
             it.inputs.property("npmIgnoreScripts", { npm.ignoreScripts })
         }
 
-        project.tasks.register(LockCopyTask.STORE_PACKAGE_LOCK_NAME, LockStoreTask::class.java) { task ->
+        project.tasks.register(extensionName(LockCopyTask.STORE_PACKAGE_LOCK_NAME), LockStoreTask::class.java) { task ->
             task.dependsOn(npmInstall)
             task.inputFile.set(nodeJsRoot.rootPackageDirectory.map { it.file(LockCopyTask.PACKAGE_LOCK) })
 
@@ -173,7 +175,7 @@ open class NodeJsRootForWasmPlugin : Plugin<Project> {
             ).disallowChanges()
         }
 
-        project.tasks.register(LockCopyTask.UPGRADE_PACKAGE_LOCK, LockStoreTask::class.java) { task ->
+        project.tasks.register(extensionName(LockCopyTask.UPGRADE_PACKAGE_LOCK), LockStoreTask::class.java) { task ->
             task.dependsOn(npmInstall)
             task.inputFile.set(nodeJsRoot.rootPackageDirectory.map { it.file(LockCopyTask.PACKAGE_LOCK) })
             task.outputDirectory.set(npm.lockFileDirectory)
@@ -197,7 +199,7 @@ open class NodeJsRootForWasmPlugin : Plugin<Project> {
             ).disallowChanges()
         }
 
-        project.tasks.register(LockCopyTask.RESTORE_PACKAGE_LOCK_NAME, LockCopyTask::class.java) { task ->
+        project.tasks.register(extensionName(LockCopyTask.RESTORE_PACKAGE_LOCK_NAME), LockCopyTask::class.java) { task ->
             task.inputFile.set(
                 npm.lockFileDirectory.flatMap { dir ->
                     dir.file(npm.lockFileName)
@@ -235,7 +237,7 @@ open class NodeJsRootForWasmPlugin : Plugin<Project> {
             it.npmResolutionManager.value(npmResolutionManager).disallowChanges()
         }
 
-        project.tasks.register("node" + CleanDataTask.NAME_SUFFIX, CleanDataTask::class.java) {
+        project.tasks.register("node" + CleanDataTask.NAME_SUFFIX + "Wasm", CleanDataTask::class.java) {
             it.cleanableStoreProvider = nodeJs.produceEnv(project.providers).map { it.cleanableStore }
             it.group = TASKS_GROUP_NAME
             it.description = "Clean unused local node version"
@@ -247,6 +249,9 @@ open class NodeJsRootForWasmPlugin : Plugin<Project> {
             project.plugins.apply(YarnForWasmPlugin::class.java)
         }
     }
+
+    private fun extensionName(baseName: String): String =
+        baseName + "Wasm"
 
     // Yes, we need to break Task Configuration Avoidance here
     // In case when we need to create package.json's files and execute kotlinNpmInstall,
@@ -290,11 +295,11 @@ open class NodeJsRootForWasmPlugin : Plugin<Project> {
         fun apply(rootProject: Project): NodeJsRootExtension {
             check(rootProject == rootProject.rootProject)
             rootProject.plugins.apply(NodeJsRootForWasmPlugin::class.java)
-            return rootProject.extensions.getByName(NodeJsRootExtension.EXTENSION_NAME) as NodeJsRootExtension
+            return rootProject.extensions.getByName(NodeJsRootExtension.EXTENSION_NAME + "Wasm") as NodeJsRootExtension
         }
 
         val Project.kotlinNodeJsRootExtension: NodeJsRootExtension
-            get() = extensions.getByName(NodeJsRootExtension.EXTENSION_NAME).castIsolatedKotlinPluginClassLoaderAware()
+            get() = extensions.getByName(NodeJsRootExtension.EXTENSION_NAME + "Wasm").castIsolatedKotlinPluginClassLoaderAware()
 
         val Project.kotlinNpmResolutionManager: Provider<KotlinNpmResolutionManager>
             get() {

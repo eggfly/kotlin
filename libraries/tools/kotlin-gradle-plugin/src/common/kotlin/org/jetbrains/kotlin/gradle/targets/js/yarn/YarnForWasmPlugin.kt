@@ -37,11 +37,12 @@ open class YarnForWasmPlugin : Plugin<Project> {
         val yarnSpec = project.extensions.createYarnEnvSpec()
 
         val yarnRootExtension = this.extensions.create(
-            YarnRootExtension.YARN,
+            extensionName(YarnRootExtension.YARN),
             YarnRootExtension::class.java,
             this,
             nodeJsRoot,
-            yarnSpec
+            yarnSpec,
+            "Wasm"
         )
 
         yarnSpec.initializeYarnEnvSpec(objects, yarnRootExtension)
@@ -53,7 +54,7 @@ open class YarnForWasmPlugin : Plugin<Project> {
             yarnRootExtension
         )
 
-        val setupTask = registerTask<YarnSetupTask>(YarnSetupTask.NAME, listOf(yarnSpec)) {
+        val setupTask = registerTask<YarnSetupTask>(extensionName(YarnSetupTask.NAME), listOf(yarnSpec)) {
             with(nodeJs) {
                 it.dependsOn(project.nodeJsSetupTaskProvider)
             }
@@ -67,7 +68,7 @@ open class YarnForWasmPlugin : Plugin<Project> {
             }
         }
 
-        val kotlinNpmInstall = tasks.named(KotlinNpmInstallTask.NAME)
+        val kotlinNpmInstall = tasks.named(KotlinNpmInstallTask.NAME + "Wasm")
         kotlinNpmInstall.configure {
             it.dependsOn(setupTask)
             it.inputs.property("yarnIgnoreScripts", { yarnRootExtension.ignoreScripts })
@@ -77,12 +78,12 @@ open class YarnForWasmPlugin : Plugin<Project> {
             nodeJs.produceEnv(project.providers)
         ).disallowChanges()
 
-        tasks.register("yarn" + CleanDataTask.NAME_SUFFIX, CleanDataTask::class.java) {
+        tasks.register("yarn" + CleanDataTask.NAME_SUFFIX + "Was", CleanDataTask::class.java) {
             it.cleanableStoreProvider = provider { yarnRootExtension.requireConfigured().cleanableStore }
             it.description = "Clean unused local yarn version"
         }
 
-        tasks.register(STORE_YARN_LOCK_NAME, YarnLockStoreTask::class.java) { task ->
+        tasks.register(extensionName(STORE_YARN_LOCK_NAME), YarnLockStoreTask::class.java) { task ->
             task.dependsOn(kotlinNpmInstall)
             task.inputFile.set(nodeJsRoot.rootPackageDirectory.map { it.file(LockCopyTask.YARN_LOCK) })
             task.outputDirectory.set(yarnRootExtension.lockFileDirectory)
@@ -99,14 +100,14 @@ open class YarnForWasmPlugin : Plugin<Project> {
             ).disallowChanges()
         }
 
-        tasks.register(UPGRADE_YARN_LOCK, YarnLockCopyTask::class.java) { task ->
+        tasks.register(extensionName(UPGRADE_YARN_LOCK), YarnLockCopyTask::class.java) { task ->
             task.dependsOn(kotlinNpmInstall)
             task.inputFile.set(nodeJsRoot.rootPackageDirectory.map { it.file(LockCopyTask.YARN_LOCK) })
             task.outputDirectory.set(yarnRootExtension.lockFileDirectory)
             task.fileName.set(yarnRootExtension.lockFileName)
         }
 
-        tasks.register(RESTORE_YARN_LOCK_NAME, YarnLockCopyTask::class.java) {
+        tasks.register(extensionName(RESTORE_YARN_LOCK_NAME), YarnLockCopyTask::class.java) {
             val lockFile = yarnRootExtension.lockFileDirectory.resolve(yarnRootExtension.lockFileName)
             it.inputFile.set(yarnRootExtension.lockFileDirectory.resolve(yarnRootExtension.lockFileName))
             it.outputDirectory.set(nodeJsRoot.rootPackageDirectory)
@@ -127,10 +128,13 @@ open class YarnForWasmPlugin : Plugin<Project> {
 
     private fun ExtensionContainer.createYarnEnvSpec(): YarnRootEnvSpec {
         return create(
-            YarnRootEnvSpec.YARN,
+            extensionName(YarnRootEnvSpec.YARN),
             YarnRootEnvSpec::class.java
         )
     }
+
+    private fun extensionName(baseName: String): String =
+        baseName + "Wasm"
 
     private fun YarnRootEnvSpec.initializeYarnEnvSpec(
         objectFactory: ObjectFactory,
@@ -159,7 +163,7 @@ open class YarnForWasmPlugin : Plugin<Project> {
         fun apply(project: Project): YarnRootExtension {
             val rootProject = project.rootProject
             rootProject.plugins.apply(YarnForWasmPlugin::class.java)
-            return rootProject.extensions.getByName(YarnRootExtension.YARN) as YarnRootExtension
+            return rootProject.extensions.getByName(YarnRootExtension.YARN + "Wasm") as YarnRootExtension
         }
 
         const val STORE_YARN_LOCK_NAME = "kotlinStoreYarnLock"
