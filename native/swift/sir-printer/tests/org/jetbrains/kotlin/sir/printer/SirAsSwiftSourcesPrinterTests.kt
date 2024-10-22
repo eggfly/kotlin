@@ -1012,7 +1012,7 @@ class SirAsSwiftSourcesPrinterTests {
                 name = "method"
                 returnType = SirNominalType(SirSwiftModule.bool)
                 documentation = "// Check that nested attributes handled properly"
-                attributes += SirAttribute.Available(message = "Available method", deprecated = false, obsoleted = false)
+                attributes += SirAttribute.Available(message = "Deprecated method", deprecated = true, obsoleted = false)
             }
         }.attachDeclarations()
 

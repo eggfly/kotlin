@@ -4,7 +4,7 @@ public typealias myVariable = Swift.Bool
 @available(*, deprecated, message: "Deprecated class")
 public class OPEN_INTERNAL {
     // Check that nested attributes handled properly
-    @available(*, message: "Available method")
+    @available(*, deprecated, message: "Deprecated method")
     public func method() -> Swift.Bool {
         stub()
     }
