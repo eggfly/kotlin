@@ -1002,37 +1002,40 @@ fun IrFunction.copyValueParametersToStatic(
     dispatchReceiverType: IrType? = source.dispatchReceiverParameter?.type,
 ) {
     val target = this
-    assert(target.valueParameters.isEmpty())
+    assert(target.parameters.isEmpty())
 
-    source.dispatchReceiverParameter?.let { originalDispatchReceiver ->
-        assert(dispatchReceiverType!!.isSubtypeOfClass(originalDispatchReceiver.type.classOrNull!!)) {
-            "Dispatch receiver type ${dispatchReceiverType.render()} is not a subtype of ${originalDispatchReceiver.type.render()}"
+    target.parameters += source.parameters.map { param ->
+        when (param.kind) {
+            IrParameterKind.DispatchReceiver -> {
+                assert(dispatchReceiverType!!.isSubtypeOfClass(param.type.classOrNull!!)) {
+                    "Dispatch receiver type ${dispatchReceiverType.render()} is not a subtype of ${param.type.render()}"
+                }
+                val type = dispatchReceiverType.remapTypeParameters(
+                    (param.parent as IrTypeParametersContainer).classIfConstructor,
+                    target.classIfConstructor
+                )
+
+                param.copyTo(
+                    target,
+                    origin = param.origin,
+                    type = type,
+                    name = Name.identifier("\$this")
+                )
+            }
+            IrParameterKind.ExtensionReceiver -> {
+                param.copyTo(
+                    target,
+                    origin = param.origin,
+                    name = Name.identifier("\$receiver")
+                )
+            }
+            IrParameterKind.ContextParameter, IrParameterKind.RegularParameter -> {
+                param.copyTo(
+                    target,
+                    origin = origin
+                )
+            }
         }
-        val type = dispatchReceiverType.remapTypeParameters(
-            (originalDispatchReceiver.parent as IrTypeParametersContainer).classIfConstructor,
-            target.classIfConstructor
-        )
-
-        target.valueParameters = target.valueParameters memoryOptimizedPlus originalDispatchReceiver.copyTo(
-            target,
-            origin = originalDispatchReceiver.origin,
-            type = type,
-            name = Name.identifier("\$this")
-        )
-    }
-    source.extensionReceiverParameter?.let { originalExtensionReceiver ->
-        target.valueParameters = target.valueParameters memoryOptimizedPlus originalExtensionReceiver.copyTo(
-            target,
-            origin = originalExtensionReceiver.origin,
-            name = Name.identifier("\$receiver")
-        )
-    }
-
-    for (oldValueParameter in source.valueParameters) {
-        target.valueParameters = target.valueParameters memoryOptimizedPlus oldValueParameter.copyTo(
-            target,
-            origin = origin
-        )
     }
 }
 
