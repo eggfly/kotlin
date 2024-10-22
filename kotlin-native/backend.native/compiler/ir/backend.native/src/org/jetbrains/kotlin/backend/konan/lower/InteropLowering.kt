@@ -1125,7 +1125,7 @@ private class InteropTransformer(
                 IntrinsicType.INTEROP_STATIC_C_FUNCTION -> {
                     val irCallableReference = unwrapStaticFunctionArgument(expression.getValueArgument(0)!!)
 
-                    require(irCallableReference != null && irCallableReference.getArguments().isEmpty()
+                    require(irCallableReference != null && irCallableReference.arguments.none { it != null }
                             && irCallableReference.symbol is IrSimpleFunctionSymbol) { renderCompilerError(expression) }
 
                     val targetSymbol = irCallableReference.symbol
@@ -1209,7 +1209,7 @@ private class InteropTransformer(
                     val irCallableReference = unwrapStaticFunctionArgument(expression.getValueArgument(2)!!)
 
                     require(irCallableReference != null
-                            && irCallableReference.getArguments().isEmpty()) { renderCompilerError(expression) }
+                            && irCallableReference.arguments.none { it != null }) { renderCompilerError(expression) }
 
                     val targetSymbol = irCallableReference.symbol
                     val jobPointer = IrFunctionReferenceImpl.fromSymbolDescriptor(
