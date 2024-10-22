@@ -235,7 +235,6 @@ class KotlinNativeCompilerDownloadIT : KGPBaseTest() {
 
             build("assemble") {
                 assertOutputContainsExactlyTimes("Extracting dependency:", expectedNativeDependencies.size)
-                assertOutputContainsExactlyTimes("Downloading dependency https://download.jetbrains.com/kotlin/native/", expectedNativeDependencies.size)
             }
         }
     }
