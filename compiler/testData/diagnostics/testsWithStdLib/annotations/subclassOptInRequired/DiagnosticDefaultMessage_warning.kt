@@ -13,3 +13,5 @@ open class OpenKlassInheritor: <!OPT_IN_TO_INHERITANCE("ApiMarker; This class or
 open class OpenApiKlassInheritor: <!OPT_IN_USAGE("ApiMarker; This declaration needs opt-in. Its usage should be marked with '@ApiMarker' or '@OptIn(ApiMarker::class)'")!>OpenApiKlass<!>()
 
 fun check(klass: <!OPT_IN_USAGE("ApiMarker; This declaration needs opt-in. Its usage should be marked with '@ApiMarker' or '@OptIn(ApiMarker::class)'")!>OpenApiKlass<!>){}
+
+class FinalImplA: <!OPT_IN_TO_INHERITANCE!>OpenKlass<!>()

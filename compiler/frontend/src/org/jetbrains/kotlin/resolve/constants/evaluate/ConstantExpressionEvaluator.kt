@@ -344,8 +344,8 @@ class ConstantExpressionEvaluator(
         }
 
         private val EXPERIMENTAL_UNSIGNED_LITERALS_DIAGNOSTICS = OptInUsageChecker.OptInReporterMultiplexer(
-            warning = { ExperimentalityDiagnostic1(Errors.EXPERIMENTAL_UNSIGNED_LITERALS, "should") },
-            error = { ExperimentalityDiagnostic1(Errors.EXPERIMENTAL_UNSIGNED_LITERALS_ERROR, "must") },
+            warning = { _, _ -> ExperimentalityDiagnostic1(Errors.EXPERIMENTAL_UNSIGNED_LITERALS, "should") },
+            error = { _, _ -> ExperimentalityDiagnostic1(Errors.EXPERIMENTAL_UNSIGNED_LITERALS_ERROR, "must") },
             futureError = ExperimentalityDiagnostic1(Errors.EXPERIMENTAL_UNSIGNED_LITERALS_ERROR, "must"),
         )
 

@@ -34,7 +34,7 @@ class OptInMarkerDeclarationAnnotationChecker(private val module: ModuleDescript
         actualTargets: List<KotlinTarget>,
         trace: BindingTrace,
         annotated: KtAnnotated?,
-        languageVersionSettings: LanguageVersionSettings
+        languageVersionSettings: LanguageVersionSettings,
     ) {
         var hasOptIn = false
 
@@ -104,46 +104,19 @@ class OptInMarkerDeclarationAnnotationChecker(private val module: ModuleDescript
         annotationClasses: List<ConstantValue<*>>,
         trace: BindingTrace,
         entry: KtAnnotationEntry,
-        annotationFqName: FqName
+        annotationFqName: FqName,
     ) {
-        when (annotated) {
-            is KtAnnotatedExpression -> {
-                if (annotated.baseExpression is KtObjectLiteralExpression) {
-                    trace.report(Errors.SUBCLASS_OPT_IN_INAPPLICABLE.on(entry, "object"))
-                }
-                return
-            }
-            is KtClassOrObject -> {
-                val descriptor = trace[BindingContext.CLASS, annotated]
-                if (descriptor != null) {
-                    val kind = descriptor.kind
-                    if (kind == ClassKind.OBJECT || kind == ClassKind.ENUM_CLASS || kind == ClassKind.ANNOTATION_CLASS) {
-                        trace.report(Errors.SUBCLASS_OPT_IN_INAPPLICABLE.on(entry, kind.toString()))
-                        return
-                    }
-                    if (kind != ClassKind.ENUM_ENTRY) {
-                        // ^ We don't report anything on enum entries because it's anyway inapplicable target
-                        val modality = descriptor.modality
-                        if (modality != Modality.ABSTRACT && modality != Modality.OPEN) {
-                            trace.report(Errors.SUBCLASS_OPT_IN_INAPPLICABLE.on(entry, "$modality $kind"))
-                            return
-                        }
-                        if (descriptor.isFun) {
-                            trace.report(Errors.SUBCLASS_OPT_IN_INAPPLICABLE.on(entry, "fun interface"))
-                            return
-                        }
-                        if (annotated.isLocal) {
-                            trace.report(Errors.SUBCLASS_OPT_IN_INAPPLICABLE.on(entry, "local $kind"))
-                            return
-                        }
-                    }
-                }
-            }
-        }
+        val (isSubclassOptInApplicable, message) = isSubclassOptInApplicable(annotated, trace)
+        if (!isSubclassOptInApplicable && message != null) trace.report(Errors.SUBCLASS_OPT_IN_INAPPLICABLE.on(entry, message))
         checkArgumentsAreMarkers(annotationClasses, trace, entry, annotationFqName)
     }
 
-    private fun checkArgumentsAreMarkers(annotationClasses: List<ConstantValue<*>>, trace: BindingTrace, entry: KtAnnotationEntry, annotationFqName: FqName) {
+    private fun checkArgumentsAreMarkers(
+        annotationClasses: List<ConstantValue<*>>,
+        trace: BindingTrace,
+        entry: KtAnnotationEntry,
+        annotationFqName: FqName,
+    ) {
         for ((index, annotationClass) in annotationClasses.withIndex()) {
             val classDescriptor =
                 (annotationClass as? KClassValue)?.getArgumentType(module)?.constructor?.declarationDescriptor as? ClassDescriptor
@@ -164,7 +137,7 @@ class OptInMarkerDeclarationAnnotationChecker(private val module: ModuleDescript
 
     private fun checkMarkerTargetsAndRetention(
         entries: List<KtAnnotationEntry>,
-        trace: BindingTrace
+        trace: BindingTrace,
     ) {
         val associatedEntries = entries.associateWith { entry -> trace.bindingContext.get(BindingContext.ANNOTATION, entry) }.entries
         val targetEntry = associatedEntries.firstOrNull { (_, descriptor) ->
@@ -194,6 +167,40 @@ class OptInMarkerDeclarationAnnotationChecker(private val module: ModuleDescript
         }
     }
 }
+
+
+fun isSubclassOptInApplicable(annotated: KtAnnotated?, trace: BindingTrace): Pair<Boolean, String?> {
+    when (annotated) {
+        is KtAnnotatedExpression -> {
+            if (annotated.baseExpression is KtObjectLiteralExpression)
+                return false to "object"
+        }
+        is KtClassOrObject -> {
+            val descriptor = trace[BindingContext.CLASS, annotated]
+            if (descriptor != null) {
+                val kind = descriptor.kind
+                if (kind == ClassKind.OBJECT || kind == ClassKind.ENUM_CLASS || kind == ClassKind.ANNOTATION_CLASS) {
+                    return false to kind.toString()
+                }
+                if (kind != ClassKind.ENUM_ENTRY) {
+                    // ^ We don't report anything on enum entries because it's anyway inapplicable target
+                    val modality = descriptor.modality
+                    if (modality != Modality.ABSTRACT && modality != Modality.OPEN) {
+                        return false to "$modality $kind"
+                    }
+                    if (descriptor.isFun) {
+                        return false to "fun interface"
+                    }
+                    if (annotated.isLocal) {
+                        return false to "local $kind"
+                    }
+                }
+            }
+        }
+    }
+    return true to null
+}
+
 
 @Deprecated("Please use OptInMarkerDeclarationAnnotationChecker instead", ReplaceWith("OptInMarkerDeclarationAnnotationChecker"))
 @Suppress("unused")
