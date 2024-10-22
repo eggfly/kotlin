@@ -7,7 +7,6 @@ package org.jetbrains.kotlin.gradle.targets.js.ir
 
 import org.gradle.api.*
 import org.gradle.api.file.Directory
-import org.gradle.api.file.DuplicatesStrategy
 import org.gradle.api.file.RegularFile
 import org.gradle.api.plugins.ExtensionAware
 import org.gradle.api.provider.Provider
@@ -17,7 +16,6 @@ import org.jetbrains.kotlin.gradle.plugin.AbstractKotlinTargetConfigurator
 import org.jetbrains.kotlin.gradle.plugin.KotlinCompilation
 import org.jetbrains.kotlin.gradle.plugin.KotlinTargetWithTests
 import org.jetbrains.kotlin.gradle.plugin.mpp.isMain
-import org.jetbrains.kotlin.gradle.plugin.mpp.isTest
 import org.jetbrains.kotlin.gradle.targets.js.KotlinJsPlatformTestRun
 import org.jetbrains.kotlin.gradle.targets.js.KotlinWasmTargetType
 import org.jetbrains.kotlin.gradle.targets.js.dsl.Distribution
@@ -25,24 +23,21 @@ import org.jetbrains.kotlin.gradle.targets.js.dsl.ExperimentalDistributionDsl
 import org.jetbrains.kotlin.gradle.targets.js.dsl.KotlinJsBinaryMode
 import org.jetbrains.kotlin.gradle.targets.js.dsl.KotlinJsSubTargetDsl
 import org.jetbrains.kotlin.gradle.targets.js.testing.KotlinJsTest
-import org.jetbrains.kotlin.gradle.tasks.IncrementalSyncTask
-import org.jetbrains.kotlin.gradle.tasks.locateTask
 import org.jetbrains.kotlin.gradle.tasks.registerTask
 import org.jetbrains.kotlin.gradle.testing.internal.configureConventions
 import org.jetbrains.kotlin.gradle.testing.internal.kotlinTestRegistry
 import org.jetbrains.kotlin.gradle.utils.domainObjectSet
 import org.jetbrains.kotlin.gradle.utils.lowerCamelCaseName
-import org.jetbrains.kotlin.gradle.utils.mapToFile
 import org.jetbrains.kotlin.gradle.utils.whenEvaluated
 
-interface IKotlinJsIrSubTarget : KotlinJsSubTargetDsl, Named {
+interface KotlinJsIrSubTargetWIthBinary : KotlinJsSubTargetDsl, Named {
     fun processBinary()
 }
 
 abstract class KotlinJsIrSubTarget(
     val target: KotlinJsIrTarget,
     val disambiguationClassifier: String,
-) : IKotlinJsIrSubTarget, KotlinJsSubTargetDsl {
+) : KotlinJsIrSubTargetWIthBinary, KotlinJsSubTargetDsl {
     init {
         target.configureTestSideEffect
     }
@@ -58,7 +53,7 @@ abstract class KotlinJsIrSubTarget(
 
     internal val taskGroupName = "Kotlin $disambiguationClassifier"
 
-    val subTargetConfigurators: DomainObjectSet<SubTargetConfigurator<*, *>> =
+    internal val subTargetConfigurators: DomainObjectSet<SubTargetConfigurator<*, *>> =
         project.objects.domainObjectSet<SubTargetConfigurator<*, *>>()
 
     @ExperimentalDistributionDsl
@@ -69,8 +64,8 @@ abstract class KotlinJsIrSubTarget(
             }
     }
 
-    internal open fun configure() {
-        target.compilations.all { compilation ->
+    internal fun configure() {
+        target.compilations.configureEach { compilation ->
             compilation.compileTaskProvider.configure { task ->
                 task.compilerOptions {
                     freeCompilerArgs.add(compilation.outputModuleName.map { "$PER_MODULE_OUTPUT_NAME=$it" })
@@ -189,18 +184,18 @@ abstract class KotlinJsIrSubTarget(
         }
     }
 
-    open fun configureCompilation(compilation: KotlinJsIrCompilation) {
+    private fun configureCompilation(compilation: KotlinJsIrCompilation) {
         setupRun(compilation)
         setupBuild(compilation)
     }
 
-    open fun setupRun(compilation: KotlinJsIrCompilation) {
+    private fun setupRun(compilation: KotlinJsIrCompilation) {
         subTargetConfigurators.configureEach {
             it.setupRun(compilation)
         }
     }
 
-    open fun setupBuild(compilation: KotlinJsIrCompilation) {
+    private fun setupBuild(compilation: KotlinJsIrCompilation) {
         subTargetConfigurators.configureEach {
             it.setupBuild(compilation)
         }

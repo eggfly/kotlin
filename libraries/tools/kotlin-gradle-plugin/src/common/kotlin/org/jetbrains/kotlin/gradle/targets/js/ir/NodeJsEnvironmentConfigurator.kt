@@ -10,9 +10,7 @@ import org.jetbrains.kotlin.gradle.targets.js.KotlinWasmTargetType
 import org.jetbrains.kotlin.gradle.targets.js.dsl.KotlinJsBinaryMode
 import org.jetbrains.kotlin.gradle.targets.js.ir.KotlinJsIrSubTarget.Companion.RUN_TASK_NAME
 import org.jetbrains.kotlin.gradle.targets.js.nodejs.NodeJsExec
-import org.jetbrains.kotlin.gradle.tasks.IncrementalSyncTask
 import org.jetbrains.kotlin.gradle.tasks.locateTask
-import org.jetbrains.kotlin.gradle.utils.named
 import org.jetbrains.kotlin.util.capitalizeDecapitalize.toLowerCaseAsciiOnly
 
 class NodeJsEnvironmentConfigurator(subTarget: KotlinJsIrSubTarget) :
@@ -28,7 +26,7 @@ class NodeJsEnvironmentConfigurator(subTarget: KotlinJsIrSubTarget) :
         if (locateTask != null) return locateTask
 
         val compilation = binary.compilation
-        return NodeJsExec.create(compilation, binaryRunName) {
+        return NodeJsExec.register(compilation, binaryRunName) {
             group = subTarget.taskGroupName
 
             if (subTarget.target.wasmTargetType == KotlinWasmTargetType.WASI) {

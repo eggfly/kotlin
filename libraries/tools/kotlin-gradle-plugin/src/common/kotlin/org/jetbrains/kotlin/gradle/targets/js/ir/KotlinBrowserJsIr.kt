@@ -7,7 +7,6 @@ package org.jetbrains.kotlin.gradle.targets.js.ir
 
 import org.gradle.api.Action
 import org.jetbrains.kotlin.gradle.dsl.KOTLIN_JS_DCE_TOOL_DEPRECATION_MESSAGE
-import org.jetbrains.kotlin.gradle.plugin.PropertiesProvider
 import org.jetbrains.kotlin.gradle.targets.js.dsl.ExperimentalDceDsl
 import org.jetbrains.kotlin.gradle.targets.js.dsl.KotlinJsBrowserDsl
 import org.jetbrains.kotlin.gradle.targets.js.nodejs.NodeJsPlugin.Companion.kotlinNodeJsEnvSpec
@@ -16,6 +15,7 @@ import org.jetbrains.kotlin.gradle.targets.js.testing.KotlinJsTest
 import org.jetbrains.kotlin.gradle.targets.js.testing.karma.KotlinKarma
 import org.jetbrains.kotlin.gradle.targets.js.webpack.KotlinWebpack
 import org.jetbrains.kotlin.gradle.targets.js.webpack.KotlinWebpackConfig
+import org.jetbrains.kotlin.gradle.utils.withType
 import javax.inject.Inject
 
 abstract class KotlinBrowserJsIr @Inject constructor(target: KotlinJsIrTarget) :
@@ -69,19 +69,19 @@ abstract class KotlinBrowserJsIr @Inject constructor(target: KotlinJsIrTarget) :
     }
 
     override fun runTask(body: Action<KotlinWebpack>) {
-        subTargetConfigurators.configureEach {
-            if (it is WebpackConfigurator) {
+        subTargetConfigurators
+            .withType<WebpackConfigurator>()
+            .configureEach {
                 it.configureRun(body)
             }
-        }
     }
 
     override fun webpackTask(body: Action<KotlinWebpack>) {
-        subTargetConfigurators.configureEach {
-            if (it is WebpackConfigurator) {
+        subTargetConfigurators
+            .withType<WebpackConfigurator>()
+            .configureEach {
                 it.configureBuild(body)
             }
-        }
     }
 
     @Suppress("DeprecatedCallableAddReplaceWith")

@@ -3,6 +3,8 @@
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
+@file:OptIn(ExperimentalWasmDsl::class)
+
 package org.jetbrains.kotlin.gradle.targets.js.ir
 
 import org.gradle.api.Project
@@ -55,6 +57,12 @@ sealed class JsIrBinary(
     val validateGeneratedTsTaskName: String = validateTypeScriptTaskName()
 
     var generateTs: Boolean = false
+
+    val outputDirBase: Provider<Directory> = project.layout.buildDirectory
+        .dir(COMPILE_SYNC)
+        .map { it.dir(compilation.target.targetName) }
+        .map { it.dir(compilation.name) }
+        .map { it.dir(name) }
 
     val linkTask: TaskProvider<KotlinJsIrLink> =
         project.registerTask(linkTaskName, KotlinJsIrLink::class.java, listOf(project, target.platformType))
@@ -166,24 +174,23 @@ sealed class JsIrBinary(
     }
 }
 
+@ExperimentalWasmDsl
 interface WasmBinary {
-    val target: KotlinJsIrTarget
-
     val compilation: KotlinJsIrCompilation
 
     val name: String
+
+    val outputDirBase: Provider<Directory>
 
     val mode: KotlinJsBinaryMode
 
     val linkTask: TaskProvider<KotlinJsIrLink>
 
-    val optimizeTaskName: String
-
     val optimizeTask: TaskProvider<BinaryenExec>
 }
 
 internal fun WasmBinary.configureOptimizeTask(taskProvider: TaskProvider<BinaryenExec>) {
-    val project = target.project
+    val target = compilation.target as KotlinJsIrTarget
 
     taskProvider.configure { task ->
         val compiledWasmFile = linkTask.flatMap { link ->
@@ -195,11 +202,7 @@ internal fun WasmBinary.configureOptimizeTask(taskProvider: TaskProvider<Binarye
         task.dependsOn(linkTask)
         task.inputFileProperty.set(compiledWasmFile)
 
-        val outputDirectory: Provider<Directory> = target.project.layout.buildDirectory
-            .dir(COMPILE_SYNC)
-            .map { it.dir(compilation.target.targetName) }
-            .map { it.dir(compilation.name) }
-            .map { it.dir(name) }
+        val outputDirectory: Provider<Directory> = outputDirBase
             .map { it.dir("optimized") }
 
         task.outputDirectory.set(outputDirectory)
@@ -211,6 +214,7 @@ internal fun WasmBinary.configureOptimizeTask(taskProvider: TaskProvider<Binarye
 
     if (compilation.isMain() && mode == KotlinJsBinaryMode.PRODUCTION) {
         if (target.wasmTargetType == KotlinWasmTargetType.WASI) {
+            val project = target.project
             project.tasks.named(LifecycleBasePlugin.ASSEMBLE_TASK_NAME).dependsOn(taskProvider)
         }
     }
@@ -259,9 +263,7 @@ class ExecutableWasm(
         }
     }
 
-    override val optimizeTaskName: String = optimizeTaskName()
-
-    override val optimizeTask: TaskProvider<BinaryenExec> = BinaryenExec.create(compilation, optimizeTaskName) {
+    override val optimizeTask: TaskProvider<BinaryenExec> = BinaryenExec.create(compilation, optimizeTaskName()) {
         val compileWasmDestDir = linkTask.map {
             it.destinationDirectory
         }
@@ -298,7 +300,7 @@ class LibraryWasm(
     compilation: KotlinJsIrCompilation,
     name: String,
     mode: KotlinJsBinaryMode,
-) : Library(
+) : JsIrBinary(
     compilation,
     name,
     mode
@@ -312,10 +314,8 @@ class LibraryWasm(
         }
     }
 
-    override val optimizeTaskName: String = optimizeTaskName()
-
     @OptIn(ExperimentalWasmDsl::class)
-    override val optimizeTask: TaskProvider<BinaryenExec> = BinaryenExec.create(compilation, optimizeTaskName) {
+    override val optimizeTask: TaskProvider<BinaryenExec> = BinaryenExec.create(compilation, optimizeTaskName()) {
         val compileWasmDestDir = linkTask.map {
             it.destinationDirectory
         }

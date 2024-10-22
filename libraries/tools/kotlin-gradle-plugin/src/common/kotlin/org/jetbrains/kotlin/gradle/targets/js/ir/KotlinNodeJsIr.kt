@@ -22,6 +22,7 @@ import org.jetbrains.kotlin.gradle.targets.js.testing.KotlinWasmNode
 import org.jetbrains.kotlin.gradle.tasks.IncrementalSyncTask
 import org.jetbrains.kotlin.gradle.utils.getFile
 import org.jetbrains.kotlin.gradle.utils.named
+import org.jetbrains.kotlin.gradle.utils.withType
 import javax.inject.Inject
 
 abstract class KotlinNodeJsIr @Inject constructor(target: KotlinJsIrTarget) :
@@ -34,11 +35,11 @@ abstract class KotlinNodeJsIr @Inject constructor(target: KotlinJsIrTarget) :
         get() = "Run all ${target.name} tests inside nodejs using the builtin test framework"
 
     override fun runTask(body: Action<NodeJsExec>) {
-        subTargetConfigurators.configureEach {
-            if (it is NodeJsEnvironmentConfigurator) {
+        subTargetConfigurators
+            .withType<NodeJsEnvironmentConfigurator>()
+            .configureEach {
                 it.configureRun(body)
             }
-        }
     }
 
     @ExperimentalMainFunctionArgumentsDsl

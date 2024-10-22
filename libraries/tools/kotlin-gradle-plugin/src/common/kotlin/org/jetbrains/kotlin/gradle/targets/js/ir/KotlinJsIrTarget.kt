@@ -8,6 +8,7 @@ package org.jetbrains.kotlin.gradle.targets.js.ir
 import org.gradle.api.NamedDomainObjectContainer
 import org.gradle.api.Project
 import org.gradle.api.tasks.TaskProvider
+import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
 import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
 import org.jetbrains.kotlin.gradle.dsl.*
 import org.jetbrains.kotlin.gradle.plugin.KotlinCompilation
@@ -52,8 +53,8 @@ constructor(
 
     private val propertiesProvider = PropertiesProvider(project)
 
-    override val subTargets: NamedDomainObjectContainer<IKotlinJsIrSubTarget> = project.container(
-        IKotlinJsIrSubTarget::class.java
+    override val subTargets: NamedDomainObjectContainer<KotlinJsIrSubTargetWIthBinary> = project.container(
+        KotlinJsIrSubTargetWIthBinary::class.java
     )
 
     override val testRuns: NamedDomainObjectContainer<KotlinJsReportAggregatingTestRun> by lazy {
@@ -165,7 +166,7 @@ constructor(
             }
     }
 
-    fun <T : IKotlinJsIrSubTarget> addSubTarget(type: Class<T>, configure: T.() -> Unit): T {
+    private fun <T : KotlinJsIrSubTargetWIthBinary> addSubTarget(type: Class<T>, configure: T.() -> Unit): T {
         val subTarget = project.objects.newInstance(type, this).also(configure)
         subTargets.add(subTarget)
         return subTarget

@@ -10,21 +10,22 @@ import org.gradle.api.NamedDomainObjectContainer
 import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
 import org.jetbrains.kotlin.gradle.plugin.KotlinTarget
 import org.jetbrains.kotlin.gradle.targets.js.d8.D8Exec
-import org.jetbrains.kotlin.gradle.targets.js.ir.IKotlinJsIrSubTarget
+import org.jetbrains.kotlin.gradle.targets.js.ir.KotlinJsIrSubTargetWIthBinary
 import org.jetbrains.kotlin.gradle.targets.js.ir.KotlinD8Ir
+import org.jetbrains.kotlin.gradle.utils.withType
 
 interface KotlinWasmSubTargetContainerDsl : KotlinTarget {
-    val subTargets: NamedDomainObjectContainer<IKotlinJsIrSubTarget>
+    val subTargets: NamedDomainObjectContainer<KotlinJsIrSubTargetWIthBinary>
 
     val d8: KotlinWasmD8Dsl
 
     val isD8Configured: Boolean
-        get() = subTargets.filterIsInstance<KotlinD8Ir>().isNotEmpty()
+        get() = subTargets.withType<KotlinD8Ir>().isNotEmpty()
 
     fun whenD8Configured(body: KotlinWasmD8Dsl.() -> Unit) {
         subTargets
-            .matching { it is KotlinD8Ir }
-            .all { body(it as KotlinD8Ir) }
+            .withType<KotlinD8Ir>()
+            .configureEach(body)
     }
 }
 

@@ -8,7 +8,7 @@ package org.jetbrains.kotlin.gradle.targets.js.ir
 import org.gradle.api.Action
 import org.gradle.api.Task
 
-interface SubTargetConfigurator<BuildTask : Task, RunTask : Task> {
+internal interface SubTargetConfigurator<BuildTask : Task, RunTask : Task> {
 
     fun setupBuild(compilation: KotlinJsIrCompilation)
 

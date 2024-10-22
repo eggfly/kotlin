@@ -16,6 +16,7 @@ import org.jetbrains.kotlin.gradle.targets.js.dsl.KotlinWasmD8Dsl
 import org.jetbrains.kotlin.gradle.targets.js.testing.KotlinJsTest
 import org.jetbrains.kotlin.gradle.targets.js.testing.KotlinWasmD8
 import org.jetbrains.kotlin.gradle.utils.getFile
+import org.jetbrains.kotlin.gradle.utils.withType
 import javax.inject.Inject
 
 @OptIn(ExperimentalWasmDsl::class)
@@ -29,11 +30,11 @@ abstract class KotlinD8Ir @Inject constructor(target: KotlinJsIrTarget) :
         get() = "Run all ${target.name} tests inside d8 using the builtin test framework"
 
     override fun runTask(body: Action<D8Exec>) {
-        subTargetConfigurators.configureEach {
-            if (it is D8EnvironmentConfigurator) {
+        subTargetConfigurators
+            .withType<D8EnvironmentConfigurator>()
+            .configureEach {
                 it.configureRun(body)
             }
-        }
     }
 
     override fun configureDefaultTestFramework(test: KotlinJsTest) {

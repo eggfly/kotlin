@@ -8,7 +8,6 @@ package org.jetbrains.kotlin.gradle.targets.js.ir
 import org.gradle.api.tasks.TaskProvider
 import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
 import org.jetbrains.kotlin.gradle.targets.js.d8.D8Exec
-import org.jetbrains.kotlin.gradle.targets.js.dsl.KotlinJsBinaryMode
 import org.jetbrains.kotlin.gradle.targets.js.ir.KotlinJsIrSubTarget.Companion.RUN_TASK_NAME
 import org.jetbrains.kotlin.gradle.tasks.locateTask
 import org.jetbrains.kotlin.util.capitalizeDecapitalize.toLowerCaseAsciiOnly
@@ -25,7 +24,7 @@ class D8EnvironmentConfigurator(subTarget: KotlinJsIrSubTarget) :
         val locateTask = project.locateTask<D8Exec>(binaryRunName)
         if (locateTask != null) return locateTask
 
-        return D8Exec.create(binary.compilation, binaryRunName) {
+        return D8Exec.register(binary.compilation, binaryRunName) {
             group = subTarget.taskGroupName
             dependsOn(project.tasks.named(subTarget.binarySyncTaskName(binary)))
             val inputFile = project.objects.fileProperty().value(

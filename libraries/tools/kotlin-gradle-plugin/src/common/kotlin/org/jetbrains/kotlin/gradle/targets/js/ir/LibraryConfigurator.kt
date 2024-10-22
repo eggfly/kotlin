@@ -24,10 +24,8 @@ class LibraryConfigurator(private val subTarget: KotlinJsIrSubTarget) : SubTarge
         val assembleTaskProvider = project.tasks.named(LifecycleBasePlugin.ASSEMBLE_TASK_NAME)
 
         compilation.binaries
-            .matching { it is Library }
-            .all { binary ->
-                binary as Library
-
+            .matching { it is Library || it is LibraryWasm }
+            .configureEach { binary ->
                 val mode = binary.mode
 
                 val distributionTask = subTarget.registerSubTargetTask<Copy>(

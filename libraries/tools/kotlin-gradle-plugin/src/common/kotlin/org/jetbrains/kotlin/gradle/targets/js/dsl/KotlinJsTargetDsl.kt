@@ -8,6 +8,7 @@ package org.jetbrains.kotlin.gradle.targets.js.dsl
 import org.gradle.api.Action
 import org.gradle.api.GradleException
 import org.gradle.api.NamedDomainObjectContainer
+import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
 import org.jetbrains.kotlin.gradle.dsl.HasConfigurableKotlinCompilerOptions
 import org.jetbrains.kotlin.gradle.dsl.KOTLIN_JS_DCE_TOOL_DEPRECATION_MESSAGE
 import org.jetbrains.kotlin.gradle.dsl.KotlinJsCompilerOptions
@@ -20,30 +21,32 @@ import org.jetbrains.kotlin.gradle.targets.js.nodejs.NodeJsExec
 import org.jetbrains.kotlin.gradle.targets.js.testing.KotlinJsTest
 import org.jetbrains.kotlin.gradle.targets.js.webpack.KotlinWebpack
 import org.jetbrains.kotlin.gradle.targets.js.webpack.KotlinWebpackConfig
+import org.jetbrains.kotlin.gradle.utils.withType
 
 interface KotlinJsSubTargetContainerDsl : KotlinTarget {
     val nodejs: KotlinJsNodeDsl
 
     val browser: KotlinJsBrowserDsl
 
-    val subTargets: NamedDomainObjectContainer<IKotlinJsIrSubTarget>
+    @ExperimentalKotlinGradlePluginApi
+    val subTargets: NamedDomainObjectContainer<KotlinJsIrSubTargetWIthBinary>
 
     val isNodejsConfigured: Boolean
-        get() = subTargets.filterIsInstance<KotlinNodeJsIr>().isNotEmpty()
+        get() = subTargets.withType<KotlinNodeJsIr>().isNotEmpty()
 
     val isBrowserConfigured: Boolean
-        get() = subTargets.filterIsInstance<KotlinBrowserJsIr>().isNotEmpty()
+        get() = subTargets.withType<KotlinBrowserJsIr>().isNotEmpty()
 
     fun whenNodejsConfigured(body: KotlinJsNodeDsl.() -> Unit) {
         subTargets
-            .matching { it is KotlinNodeJsIr }
-            .all { body(it as KotlinNodeJsIr) }
+            .withType<KotlinNodeJsIr>()
+            .configureEach(body)
     }
 
     fun whenBrowserConfigured(body: KotlinJsBrowserDsl.() -> Unit) {
         subTargets
-            .matching { it is KotlinBrowserJsIr }
-            .all { body(it as KotlinBrowserJsIr) }
+            .withType<KotlinBrowserJsIr>()
+            .configureEach(body)
     }
 }
 

@@ -174,7 +174,7 @@ class WebpackConfigurator(private val subTarget: KotlinJsIrSubTarget) : SubTarge
                         binary = binary,
                         mode = mode,
                         inputFilesDirectory = task.project.objects.directoryProperty().fileProvider(
-                            task.project.provider { linkSyncTask.get().destinationDirectory.get() },
+                            linkSyncTask.flatMap { it.destinationDirectory },
                         ),
                         entryModuleName = binary.linkTask.flatMap { it.compilerOptions.moduleName },
                         configurationActions = runTaskConfigurations,
