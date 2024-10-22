@@ -6,6 +6,7 @@
 package kotlin.text
 
 import kotlin.IllegalArgumentException
+import kotlin.experimental.ExperimentalNativeApi
 
 /**
  * Returns `true` if this character (Unicode code point) is defined in Unicode.
@@ -259,7 +260,11 @@ internal fun Char.Companion.toUpperCase(codePoint: Int): Int =
         codePoint // TODO: Implement this transformation for supplementary codepoints.
     }
 
+@ExperimentalNativeApi
 internal expect fun Char.Companion.toCodePoint(high: Char, low: Char): Int
+@ExperimentalNativeApi
 internal expect fun Char.Companion.toChars(codePoint: Int): CharArray
+@ExperimentalNativeApi
 internal expect fun Char.Companion.isSupplementaryCodePoint(codepoint: Int): Boolean
+@ExperimentalNativeApi
 internal expect fun Char.Companion.isSurrogatePair(high: Char, low: Char): Boolean

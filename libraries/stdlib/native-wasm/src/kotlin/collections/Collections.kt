@@ -6,6 +6,7 @@
 package kotlin.collections
 
 import kotlin.comparisons.*
+import kotlin.experimental.ExperimentalNativeApi
 import kotlin.internal.InlineOnly
 import kotlin.random.*
 
@@ -126,6 +127,7 @@ internal actual inline fun checkCountOverflow(count: Int): Int {
 /**
  * Replaces each element in the list with a result of a transformation specified.
  */
+@ExperimentalNativeApi
 internal expect fun <T> MutableList<T>.replaceAll(transformation: (T) -> T)
 
 /**

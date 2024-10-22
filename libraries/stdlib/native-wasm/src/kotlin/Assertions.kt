@@ -5,14 +5,18 @@
 
 package kotlin
 
+import kotlin.experimental.ExperimentalNativeApi
+
 /**
  * Throws an [AssertionError] if the [value] is false.
  */
+@ExperimentalNativeApi
 internal expect fun assert(value: Boolean)
 
 /**
  * Throws an [AssertionError] calculated by [lazyMessage] if the [value] is false.
  */
+@ExperimentalNativeApi
 internal expect fun assert(value: Boolean, lazyMessage: () -> Any)
 
 @PublishedApi
