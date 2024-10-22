@@ -145,7 +145,7 @@ interface CInteropSettings : Named {
          * ```
          *
          * In the example, the directory `include/libs` is specified as the prefix for the directories listed in the `headers`
-         * declared in the `custom.def` option.
+         * declared in the `custom.def`.
          *
          * @param includeDirs The directories to be included as prefixes for the header filters.
          */
@@ -178,7 +178,7 @@ interface CInteropSettings : Named {
          * ```
          *
          * In the example, the directory `include/libs` is specified as the prefix for the directories listed in the `headers`
-         * declared in the `custom.def` option.
+         * declared in the `custom.def`.
          *
          * @param includeDirs The collection of directories to be included as prefixes for the header filters.
          * @see [headerFilterOnly]
@@ -344,7 +344,7 @@ interface CInteropSettings : Named {
      * ```
      *
      * In the example, the directory `include/libs` is specified as the prefix for the directories listed in the `headers`
-     * declared in the `custom.def` option.
+     * declared in the `custom.def`.
      *
      * @param values The directories to be included.
      */
@@ -374,7 +374,7 @@ interface CInteropSettings : Named {
      * ```
      *
      * In the example, the directory `include/libs` is specified as the prefix for the directories listed in the `headers`
-     * declared in the `custom.def` option.
+     * declared in the `custom.def`.
      *
      * @param action Action to declare included directories
      * @see [includeDirs]
@@ -404,7 +404,7 @@ interface CInteropSettings : Named {
      * ```
      *
      * In the example, the directory `include/libs` is specified as the prefix for the directories listed in the `headers`
-     * declared in the `custom.def` option.
+     * declared in the `custom.def`.
      *
      * @param configure [IncludeDirectories] configuration
      * @see [includeDirs]
