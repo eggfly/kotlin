@@ -198,7 +198,7 @@ fun IrBuilderWithScope.irGet(type: IrType, receiver: IrExpression?, getterSymbol
         typeArgumentsCount = getterSymbol.owner.typeParameters.size,
         origin = IrStatementOrigin.GET_PROPERTY
     ).apply {
-        dispatchReceiver = receiver
+        arguments[0] = receiver
     }
 
 fun IrBuilderWithScope.irSet(type: IrType, receiver: IrExpression?, setterSymbol: IrFunctionSymbol, value: IrExpression): IrCall =
@@ -209,8 +209,8 @@ fun IrBuilderWithScope.irSet(type: IrType, receiver: IrExpression?, setterSymbol
         typeArgumentsCount = setterSymbol.owner.typeParameters.size,
         origin = IrStatementOrigin.EQ
     ).apply {
-        dispatchReceiver = receiver
-        putValueArgument(0, value)
+        arguments[0] = receiver
+        arguments[1] = value
     }
 
 fun IrBuilderWithScope.irCall(
