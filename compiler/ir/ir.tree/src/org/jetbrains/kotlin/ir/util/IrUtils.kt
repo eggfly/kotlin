@@ -48,24 +48,7 @@ fun IrMemberAccessExpression<*>.getAllArgumentsWithIr(): List<Pair<IrValueParame
         else -> error(this)
     }
 
-    return getAllArgumentsWithIr(irFunction)
-}
-
-/**
- * Binds all arguments represented in the IR to the parameters of the explicitly given function.
- * The arguments are to be evaluated in the same order as they appear in the resulting list.
- */
-fun IrMemberAccessExpression<*>.getAllArgumentsWithIr(irFunction: IrFunction): List<Pair<IrValueParameter, IrExpression?>> {
-    val res = mutableListOf<Pair<IrValueParameter, IrExpression?>>()
-
-    irFunction.dispatchReceiverParameter?.let { parameter -> res += (parameter to dispatchReceiver) }
-    irFunction.extensionReceiverParameter?.let { parameter -> res += (parameter to extensionReceiver) }
-
-    irFunction.valueParameters.forEachIndexed { index, it ->
-        res += it to getValueArgument(index)
-    }
-
-    return res
+    return irFunction.parameters zip arguments
 }
 
 /**
