@@ -619,12 +619,6 @@ open class DeepCopyIrTreeWithSymbols(
         }.processAttributes(expression)
     }
 
-    protected fun <T : IrMemberAccessExpression<*>> T.transformReceiverArguments(original: T): T =
-        apply {
-            dispatchReceiver = original.dispatchReceiver?.transform()
-            extensionReceiver = original.extensionReceiver?.transform()
-        }
-
     protected fun <T : IrMemberAccessExpression<*>> T.transformValueArguments(original: T) {
         arguments.clear()
         original.arguments.forEach {
@@ -716,7 +710,7 @@ open class DeepCopyIrTreeWithSymbols(
             mapStatementOrigin(expression.origin)
         ).apply {
             copyRemappedTypeArgumentsFrom(expression)
-            transformReceiverArguments(expression)
+            transformValueArguments(expression)
         }.processAttributes(expression)
 
     override fun visitLocalDelegatedPropertyReference(expression: IrLocalDelegatedPropertyReference): IrLocalDelegatedPropertyReference =
