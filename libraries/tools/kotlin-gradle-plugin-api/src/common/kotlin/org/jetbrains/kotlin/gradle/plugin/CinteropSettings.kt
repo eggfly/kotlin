@@ -13,6 +13,7 @@ import org.gradle.api.file.FileCollection
 
 /**
  * # C interoperability settings
+ *
  * This interface represents the configuration settings for invoking the [cinterop tool](https://kotlinlang.org/docs/native-c-interop.html)
  * in Kotlin/Native projects.
  * The cinterop tool provides the ability to use C libraries inside Kotlin projects.
@@ -21,7 +22,9 @@ import org.gradle.api.file.FileCollection
  * and other related domain objects through the Gradle API.
  *
  * ## Example
- * Here is an example of how to use a [CInteropSettings] to configure a cinterop task for the `linuxX64` target:
+ *
+ * Here is an example of how to use [CInteropSettings] to configure a cinterop task for the `linuxX64` target:
+ *
  * ```kotlin
  * //build.gradle.kts
  * kotlin {
@@ -116,7 +119,7 @@ interface CInteropSettings : Named {
         fun allHeaders(includeDirs: Collection<Any>)
 
         /**
-         * Additional directories to search for headers listed in the `headerFilter` def-file option.
+         * Additional directories to search for headers listed in the `headers` block in `.def` file.
          * It's equivalent to the `-headerFilterAdditionalSearchPrefix` cinterop tool option.
          *
          * #### Usage example
@@ -141,7 +144,7 @@ interface CInteropSettings : Named {
          * }
          * ```
          *
-         * In the example, the directory `include/libs` is specified as the prefix for the directories listed in the `headerFilter`
+         * In the example, the directory `include/libs` is specified as the prefix for the directories listed in the `headers`
          * declared in the `custom.def` option.
          *
          * @param includeDirs The directories to be included as prefixes for the header filters.
@@ -149,7 +152,7 @@ interface CInteropSettings : Named {
         fun headerFilterOnly(vararg includeDirs: Any)
 
         /**
-         * Additional directories to search for headers listed in the `headerFilter` def-file option.
+         * Additional directories to search for headers listed in the `headers` block in `.def` file.
          * It's equivalent to the `-headerFilterAdditionalSearchPrefix` cinterop tool option.
          *
          * #### Usage example
@@ -174,7 +177,7 @@ interface CInteropSettings : Named {
          * }
          * ```
          *
-         * In the example, the directory `include/libs` is specified as the prefix for the directories listed in the `headerFilter`
+         * In the example, the directory `include/libs` is specified as the prefix for the directories listed in the `headers`
          * declared in the `custom.def` option.
          *
          * @param includeDirs The collection of directories to be included as prefixes for the header filters.
@@ -233,8 +236,8 @@ interface CInteropSettings : Named {
      *}
      * ```
      *
-     * In the example, `com.test.cinterop` is the package where all the declarations for
-     * the cinterop tool are stored during compilation.
+     * In the example, the com.test.cinterop package contains all the declarations collected from headers by the cinterop tool.
+     * These declarations are then available in this package during the final Kotlin compilation.
      *
      * @param value The package name to be assigned.
      */
@@ -340,7 +343,7 @@ interface CInteropSettings : Named {
      * }
      * ```
      *
-     * In the example, the directory `include/libs` is specified as the prefix for the directories listed in the `headerFilter`
+     * In the example, the directory `include/libs` is specified as the prefix for the directories listed in the `headers`
      * declared in the `custom.def` option.
      *
      * @param values The directories to be included.
@@ -370,7 +373,7 @@ interface CInteropSettings : Named {
      * }
      * ```
      *
-     * In the example, the directory `include/libs` is specified as the prefix for the directories listed in the `headerFilter`
+     * In the example, the directory `include/libs` is specified as the prefix for the directories listed in the `headers`
      * declared in the `custom.def` option.
      *
      * @param action Action to declare included directories
@@ -400,7 +403,7 @@ interface CInteropSettings : Named {
      * }
      * ```
      *
-     * In the example, the directory `include/libs` is specified as the prefix for the directories listed in the `headerFilter`
+     * In the example, the directory `include/libs` is specified as the prefix for the directories listed in the `headers`
      * declared in the `custom.def` option.
      *
      * @param configure [IncludeDirectories] configuration
