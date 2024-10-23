@@ -97,13 +97,13 @@ class ComposerParamTransformer(
         expression: IrLocalDelegatedPropertyReference,
     ): IrExpression {
         expression.getter = expression.getter.owner.withComposerParamIfNeeded().symbol
-        expression.setter = expression.setter?.owner?.withComposerParamIfNeeded()?.symbol
+        expression.setter = expression.setter?.run { owner.withComposerParamIfNeeded().symbol }
         return super.visitLocalDelegatedPropertyReference(expression)
     }
 
     override fun visitPropertyReference(expression: IrPropertyReference): IrExpression {
-        expression.getter = expression.getter?.owner?.withComposerParamIfNeeded()?.symbol
-        expression.setter = expression.setter?.owner?.withComposerParamIfNeeded()?.symbol
+        expression.getter = expression.getter?.run { owner.withComposerParamIfNeeded().symbol }
+        expression.setter = expression.setter?.run { owner.withComposerParamIfNeeded().symbol }
         return super.visitPropertyReference(expression)
     }
 
