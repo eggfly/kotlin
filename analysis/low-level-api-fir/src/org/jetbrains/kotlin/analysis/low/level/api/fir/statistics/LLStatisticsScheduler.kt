@@ -6,7 +6,6 @@
 package org.jetbrains.kotlin.analysis.low.level.api.fir.statistics
 
 import com.intellij.util.concurrency.AppExecutorUtil
-import org.jetbrains.kotlin.analysis.low.level.api.fir.statistics.domains.LLStatisticsDomain
 import java.util.concurrent.ScheduledFuture
 import java.util.concurrent.TimeUnit
 import kotlin.time.Duration
@@ -23,14 +22,14 @@ class LLStatisticsScheduler(private val statisticsService: LLStatisticsService) 
      */
     fun schedule() {
         scheduledUpdates = scheduleWithInterval(updateInterval) {
-            statisticsService.domains.forEach<LLStatisticsDomain> { it.update() }
+            statisticsService.domains.forEach { it.update() }
         }
     }
 
-    private inline fun scheduleWithInterval(interval: Duration, crossinline action: () -> Unit): ScheduledFuture<*> {
+    private fun scheduleWithInterval(interval: Duration, action: Runnable): ScheduledFuture<*> {
         val milliseconds = interval.inWholeMilliseconds
         return AppExecutorUtil.getAppScheduledExecutorService().scheduleWithFixedDelay(
-            Runnable { action() },
+            action,
             milliseconds,
             milliseconds,
             TimeUnit.MILLISECONDS,
