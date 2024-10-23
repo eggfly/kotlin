@@ -709,12 +709,31 @@ abstract class FirDataFlowAnalyzer(
         graphBuilder.enterWhenBranchCondition(whenBranch).mergeWhenBranchEntryFlow()
     }
 
+    private fun conditionNegationVisitor(flow: MutableFlow) = object : FirVisitorVoid() {
+        fun negateExpression(expression: FirExpression) {
+            flow.getVariableIfUsedOrReal(expression)?.let {
+                flow.commitOperationStatement(it eq false)
+            }
+        }
+
+        override fun visitElement(element: FirElement) {
+            if (element is FirExpression) negateExpression(element)
+        }
+
+        override fun visitBooleanOperatorExpression(booleanOperatorExpression: FirBooleanOperatorExpression) {
+            negateExpression(booleanOperatorExpression)
+            if (booleanOperatorExpression.kind == LogicOperationKind.OR) {
+                booleanOperatorExpression.leftOperand.accept(this)
+                booleanOperatorExpression.rightOperand.accept(this)
+            }
+        }
+    }
+
     private fun CFGNode<*>.mergeWhenBranchEntryFlow() = mergeIncomingFlow { _, flow ->
         val previousConditionExitNode = previousNodes.singleOrNull() as? WhenBranchConditionExitNode ?: return@mergeIncomingFlow
         val previousCondition = previousConditionExitNode.fir.condition
         if (!previousCondition.resolvedType.isBoolean) return@mergeIncomingFlow
-        val previousConditionVariable = flow.getVariableIfUsed(previousCondition) ?: return@mergeIncomingFlow
-        flow.commitOperationStatement(previousConditionVariable eq false)
+        previousCondition.accept(conditionNegationVisitor(flow))
     }
 
     fun exitWhenBranchCondition(whenBranch: FirWhenBranch) {
@@ -740,24 +759,7 @@ abstract class FirDataFlowAnalyzer(
             else -> {
                 if (!condition.resolvedType.isBoolean) return (null to null)
                 val newFlow = lastNode.flow.fork()
-
-                val visitor = object : FirVisitorVoid() {
-                    override fun visitElement(element: FirElement) {
-                        if (element is FirExpression) {
-                            newFlow.getVariableIfUsedOrReal(element)?.let {
-                                newFlow.commitOperationStatement(it eq false)
-                            }
-                        }
-                    }
-
-                    override fun visitBooleanOperatorExpression(booleanOperatorExpression: FirBooleanOperatorExpression) {
-                        if (booleanOperatorExpression.kind == LogicOperationKind.OR) {
-                            booleanOperatorExpression.leftOperand.accept(this)
-                            booleanOperatorExpression.rightOperand.accept(this)
-                        }
-                    }
-                }
-                condition.accept(visitor)
+                condition.accept(conditionNegationVisitor(newFlow))
                 newFlow
             }
         }

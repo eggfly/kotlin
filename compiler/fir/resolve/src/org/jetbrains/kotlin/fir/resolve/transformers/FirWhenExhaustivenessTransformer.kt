@@ -67,7 +67,7 @@ class FirWhenExhaustivenessTransformer(private val bodyResolveComponents: BodyRe
                 ?: return null
 
             return ConeTypeIntersector
-                .intersectTypes(session.typeContext, listOfNotNull(subjectType) + positive?.exactType.orEmpty())
+                .intersectTypes(session.typeContext, listOf(subjectType) + positive?.exactType.orEmpty())
                 .fullyExpandedType(session)
         }
 
@@ -265,6 +265,7 @@ class FirWhenExhaustivenessTransformer(private val bodyResolveComponents: BodyRe
 
     fun isVacuousIntersection(types: Collection<ConeKotlinType>): Boolean {
         val session = bodyResolveComponents.session
+        // there are two different enum entries of the same enum class
         val enumEntries = types.mapNotNull { type ->
             (type as? ConeClassLikeType)
                 ?.toRegularClassSymbol(session)

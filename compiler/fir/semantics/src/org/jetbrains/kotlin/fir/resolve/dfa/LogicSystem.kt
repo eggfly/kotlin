@@ -51,7 +51,7 @@ abstract class LogicSystem(private val context: ConeInferenceContext) {
         }
         result.copyStatements(statementFlows, commonFlow, union)
         result.copyNegativeStatements(statementFlows, commonFlow, union)
-        result.copyImplications(statementFlows)
+        result.copyImplications(statementFlows, union)
         return result
     }
 
@@ -252,11 +252,13 @@ abstract class LogicSystem(private val context: ConeInferenceContext) {
         }
     }
 
-    private fun MutableFlow.copyImplications(flows: Collection<PersistentFlow>) {
+    private fun MutableFlow.copyImplications(flows: Collection<PersistentFlow>, union: Boolean) {
         when (flows.size) {
             0 -> {}
             1 -> implications += flows.first().implications
-            else -> {} // TODO, KT-65293: compute common implications?
+            else -> if (!union) {
+                for (flow in flows) implications += flow.implications
+            }
         }
     }
 
