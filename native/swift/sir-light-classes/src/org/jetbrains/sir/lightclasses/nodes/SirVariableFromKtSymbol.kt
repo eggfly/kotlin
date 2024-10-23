@@ -92,7 +92,7 @@ internal class SirGetterFromKtSymbol(
     override val visibility: SirVisibility get() = SirVisibility.PUBLIC
     override val documentation: String? by lazy { ktSymbol.documentation() }
     override lateinit var parent: SirDeclarationParent
-    override val attributes: List<SirAttribute> = this.translatedAttributes
+    override val attributes: List<SirAttribute> by lazy { this.translatedAttributes }
     override var body: SirFunctionBody? = null
 }
 
@@ -105,7 +105,7 @@ internal class SirSetterFromKtSymbol(
     override val visibility: SirVisibility get() = SirVisibility.PUBLIC
     override val documentation: String? by lazy { ktSymbol.documentation() }
     override lateinit var parent: SirDeclarationParent
-    override val attributes: List<SirAttribute> = this.translatedAttributes
+    override val attributes: List<SirAttribute> by lazy { this.translatedAttributes }
     override var body: SirFunctionBody? = null
     override val parameterName: String = "newValue"
 }

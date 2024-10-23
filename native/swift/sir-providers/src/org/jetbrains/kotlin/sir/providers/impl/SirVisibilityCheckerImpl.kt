@@ -148,7 +148,4 @@ public class SirVisibilityCheckerImpl(
     private fun KaDeclarationSymbol.isPublic(): Boolean = compilerVisibility.isPublicAPI
 }
 
-//it.superTypes.findIsInstanceAnd<KaNamedClassSymbol> { it.classKind != KaClassKind.INTERFACE }
-
-
 private val SUPPORTED_SYMBOL_ORIGINS = setOf(KaSymbolOrigin.SOURCE, KaSymbolOrigin.LIBRARY)

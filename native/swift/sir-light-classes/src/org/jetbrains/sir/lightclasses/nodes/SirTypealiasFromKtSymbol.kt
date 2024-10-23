@@ -49,5 +49,5 @@ internal class SirTypealiasFromKtSymbol(
         }
         set(_) = Unit
 
-    override val attributes: List<SirAttribute> = this.translatedAttributes
+    override val attributes: List<SirAttribute> by lazy { this.translatedAttributes }
 }

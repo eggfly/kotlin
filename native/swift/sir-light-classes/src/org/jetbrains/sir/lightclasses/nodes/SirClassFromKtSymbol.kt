@@ -83,7 +83,7 @@ internal class SirClassFromKtSymbol(
             }
     }
 
-    override val attributes: List<SirAttribute> = this.translatedAttributes
+    override val attributes: List<SirAttribute> by lazy { this.translatedAttributes }
 
     private fun childDeclarations(): List<SirDeclaration> = withSessions {
         ktSymbol.combinedDeclaredMemberScope

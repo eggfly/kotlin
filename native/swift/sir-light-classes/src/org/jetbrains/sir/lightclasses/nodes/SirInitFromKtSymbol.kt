@@ -52,7 +52,7 @@ internal class SirInitFromKtSymbol(
         }
         set(_) = Unit
 
-    override val attributes: List<SirAttribute> = this.translatedAttributes
+    override val attributes: List<SirAttribute> by lazy { this.translatedAttributes }
 
     override var body: SirFunctionBody? = null
 }
