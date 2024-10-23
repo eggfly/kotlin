@@ -593,26 +593,29 @@ object KotlinCompilerClient {
         val stdoutThread =
             thread {
                 try {
-                    daemon.inputStream
+                    val gotInitMessage = daemon.inputStream
                         .reader()
-                        .forEachLine {
-                            if (Thread.currentThread().isInterrupted) return@forEachLine
-                            outputListener.onOutputLine(it)
-                            if (it == COMPILE_DAEMON_IS_READY_MESSAGE) {
-                                reportingTargets.report(
-                                    DaemonReportCategory.DEBUG,
-                                    "Received the message signalling that the daemon is ready"
-                                )
-                                isEchoRead.release()
-                                return@forEachLine
-                            } else {
-                                reportingTargets.report(DaemonReportCategory.INFO, it, "daemon")
+                        .useLines { lines ->
+                            lines.any {
+                                if (Thread.currentThread().isInterrupted) return@any false
+                                outputListener.onOutputLine(it)
+                                if (it == COMPILE_DAEMON_IS_READY_MESSAGE) {
+                                    reportingTargets.report(
+                                        DaemonReportCategory.DEBUG,
+                                        "Received the message signalling that the daemon is ready"
+                                    )
+                                    return@any true
+                                } else {
+                                    reportingTargets.report(DaemonReportCategory.INFO, it, "daemon")
+                                }
+                                false
                             }
                         }
-                    if (isEchoRead.availablePermits() == 0) {
+                    if (!gotInitMessage) {
                         // That means the stream was fully read, but no "echo" received. The process is crashing.
                         daemonIsAlmostDead.set(true)
                     }
+                    isEchoRead.release()
                 } catch (_: Throwable) {
                     // Ignore, assuming all exceptions as interrupt exceptions
                 } finally {
