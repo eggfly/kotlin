@@ -14,7 +14,7 @@ import kotlin.time.Duration.Companion.milliseconds
 /**
  * Schedules periodic statistics domain updates.
  */
-class LLStatisticsScheduler(private val statisticsService: LLStatisticsService) {
+internal class LLStatisticsScheduler(private val statisticsService: LLStatisticsService) {
     private var scheduledUpdates: ScheduledFuture<*>? = null
 
     /**
