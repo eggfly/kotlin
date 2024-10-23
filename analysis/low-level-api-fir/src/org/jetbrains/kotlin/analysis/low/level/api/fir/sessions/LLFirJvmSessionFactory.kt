@@ -98,11 +98,13 @@ internal class LLFirJvmSessionFactory(project: Project) : LLFirAbstractSessionFa
                 FirSymbolProvider::class,
                 LLFirModuleWithDependenciesSymbolProvider(
                     this,
+
+                    // We don't need to register `contextJavaSymbolProvider` here. As a context session symbol provider, it is already
+                    // included in the dependency providers.
                     providers = listOfNotNull(
                         firProvider.symbolProvider,
                         switchableExtensionDeclarationsSymbolProvider,
                         syntheticFunctionInterfaceProvider,
-                        contextJavaSymbolProvider
                     ),
                     dependencyProvider
                 )
