@@ -21,6 +21,13 @@ internal class LLFirLibraryOrLibrarySourceResolvableModuleSession(
         checkIsValidKtModule(ktModule)
     }
 
+    override val lookupDefaultStarImportsInSources: Boolean
+        get() {
+            return super.lookupDefaultStarImportsInSources ||
+                    // Allow when analyzing stdlib sources
+                    ktModule is KaLibrarySourceModule
+        }
+
     companion object {
         fun checkIsValidKtModule(module: KaModule) {
             require(module is KaLibraryModule || module is KaLibrarySourceModule || module is KaBuiltinsModule) {

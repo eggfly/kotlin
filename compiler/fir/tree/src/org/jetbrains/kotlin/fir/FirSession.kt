@@ -5,6 +5,8 @@
 
 package org.jetbrains.kotlin.fir
 
+import org.jetbrains.kotlin.config.AnalysisFlags
+import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.fir.types.impl.*
 import org.jetbrains.kotlin.fir.util.ConeTypeRegistry
 import org.jetbrains.kotlin.util.ArrayMapAccessor
@@ -55,6 +57,9 @@ abstract class FirSession @PrivateSessionConstructor constructor(
     enum class Kind {
         Source, Library
     }
+
+    open val lookupDefaultStarImportsInSources: Boolean
+        get() = languageVersionSettings.getFlag(AnalysisFlags.allowKotlinPackage)
 }
 
 abstract class FirSessionProvider {
