@@ -11,6 +11,7 @@ import org.jetbrains.kotlin.analysis.api.platform.declarations.mergeDeclarationP
 import org.jetbrains.kotlin.analysis.api.platform.packages.KotlinPackageProvider
 import org.jetbrains.kotlin.analysis.api.platform.packages.mergePackageProviders
 import org.jetbrains.kotlin.analysis.low.level.api.fir.caches.NullableCaffeineCache
+import org.jetbrains.kotlin.analysis.low.level.api.fir.caches.withStatsCounter
 import org.jetbrains.kotlin.analysis.low.level.api.fir.sessions.LLFirSession
 import org.jetbrains.kotlin.analysis.low.level.api.fir.statistics.LLStatisticsService
 import org.jetbrains.kotlin.builtins.StandardNames
@@ -59,7 +60,7 @@ internal class LLFirCombinedKotlinSymbolProvider private constructor(
     private val classifierCache = NullableCaffeineCache<ClassId, FirClassLikeSymbol<*>> {
         it
             .maximumSize(500)
-            .recordStats { LLStatisticsService.getInstance(project)?.symbolProviders?.combinedSymbolProviderCacheStatsCounter }
+            .withStatsCounter(LLStatisticsService.getInstance(project)?.symbolProviders?.combinedSymbolProviderCacheStatsCounter)
     }
 
     override fun getClassLikeSymbolByClassId(classId: ClassId): FirClassLikeSymbol<*>? {
