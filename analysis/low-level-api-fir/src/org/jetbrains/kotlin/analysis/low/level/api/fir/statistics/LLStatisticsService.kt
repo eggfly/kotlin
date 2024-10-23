@@ -12,7 +12,6 @@ import io.opentelemetry.api.OpenTelemetry
 import org.jetbrains.kotlin.analysis.api.platform.statistics.KaStatisticsService
 import org.jetbrains.kotlin.analysis.api.platform.statistics.KotlinOpenTelemetryProvider
 import org.jetbrains.kotlin.analysis.low.level.api.fir.statistics.domains.LLAnalysisSessionStatistics
-import org.jetbrains.kotlin.analysis.low.level.api.fir.statistics.domains.LLSessionStatistics
 import org.jetbrains.kotlin.analysis.low.level.api.fir.statistics.domains.LLStatisticsDomain
 import org.jetbrains.kotlin.analysis.low.level.api.fir.statistics.domains.LLSymbolProviderStatistics
 
@@ -31,11 +30,9 @@ class LLStatisticsService(internal val project: Project) : Disposable {
 
     val analysisSessions: LLAnalysisSessionStatistics = LLAnalysisSessionStatistics(this)
 
-    internal val sessions: LLSessionStatistics = LLSessionStatistics(this)
-
     internal val symbolProviders: LLSymbolProviderStatistics = LLSymbolProviderStatistics(this)
 
-    internal val domains: List<LLStatisticsDomain> = listOf(analysisSessions, sessions, symbolProviders)
+    internal val domains: List<LLStatisticsDomain> = listOf(analysisSessions, symbolProviders)
 
     internal val openTelemetry: OpenTelemetry
         get() = KotlinOpenTelemetryProvider.getInstance(project)?.openTelemetry
