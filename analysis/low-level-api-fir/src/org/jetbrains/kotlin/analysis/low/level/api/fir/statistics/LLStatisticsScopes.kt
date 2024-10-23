@@ -22,7 +22,9 @@ internal interface LLCaffeineStatisticsScope {
 
 internal object LLStatisticsScopes : LLStatisticsScope("kotlin.analysis") {
     object AnalysisSessions : LLStatisticsScope("$name.analysisSessions") {
-        object AnalyzeCalls : LLStatisticsScope("$name.analyzeCalls")
+        object Analyze : LLStatisticsScope("$name.analyze") {
+            object Invocations : LLStatisticsScope("$name.invocations")
+        }
 
         object LowMemoryCacheCleanup : LLStatisticsScope("$name.lowMemoryCacheCleanup") {
             object Invocations : LLStatisticsScope("$name.invocations")
