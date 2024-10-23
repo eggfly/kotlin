@@ -17,6 +17,8 @@ import org.jetbrains.kotlin.analysis.api.platform.KotlinOptionalPlatformComponen
  * The Analysis API itself only depends on the OpenTelemetry API, which does not report any telemetry on its own. It's the responsibility of
  * the Analysis API platform to register an OpenTelemetry SDK, which then exports the collected data. This also means that no telemetry is
  * reported whatsoever, neither locally nor over any connection, by the Kotlin compiler and Standalone Analysis API.
+ *
+ * @see KaStatisticsService
  */
 public interface KotlinOpenTelemetryProvider : KotlinOptionalPlatformComponent {
     public val openTelemetry: OpenTelemetry
