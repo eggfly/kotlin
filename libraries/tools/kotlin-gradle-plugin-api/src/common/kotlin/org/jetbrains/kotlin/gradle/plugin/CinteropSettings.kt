@@ -119,7 +119,7 @@ interface CInteropSettings : Named {
         fun allHeaders(includeDirs: Collection<Any>)
 
         /**
-         * Additional directories to search for headers listed in the `headers` block in `.def` file.
+         * Additional directories to search for headers listed in the `headers` property in the `.def` file.
          * It's equivalent to the `-headerFilterAdditionalSearchPrefix` cinterop tool option.
          *
          * #### Usage example
@@ -152,7 +152,7 @@ interface CInteropSettings : Named {
         fun headerFilterOnly(vararg includeDirs: Any)
 
         /**
-         * Additional directories to search for headers listed in the `headers` block in `.def` file.
+         * Additional directories to search for headers listed in the `headers` property in the `.def` file.
          * It's equivalent to the `-headerFilterAdditionalSearchPrefix` cinterop tool option.
          *
          * #### Usage example
