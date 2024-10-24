@@ -12,6 +12,8 @@ import org.jetbrains.kotlin.sir.builder.buildGetter
 import org.jetbrains.kotlin.sir.builder.buildSetter
 import org.jetbrains.kotlin.sir.providers.SirSession
 import org.jetbrains.kotlin.sir.providers.source.KotlinSource
+import org.jetbrains.kotlin.utils.addToStdlib.ifFalse
+import org.jetbrains.kotlin.utils.addToStdlib.ifTrue
 import org.jetbrains.sir.lightclasses.SirFromKtSymbol
 import org.jetbrains.sir.lightclasses.extensions.*
 import org.jetbrains.sir.lightclasses.extensions.documentation
@@ -53,7 +55,7 @@ internal class SirVariableFromKtSymbol(
             it.setter?.let {
                 SirSetterFromKtSymbol(it, ktModule, sirSession)
             }
-        } ?: buildSetter().takeIf { !ktSymbol.isVal })?.also {
+        } ?: ktSymbol.isVal.ifFalse { buildSetter() })?.also {
             it.parent = this@SirVariableFromKtSymbol
         }
     }

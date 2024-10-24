@@ -7,7 +7,7 @@ public typealias deprecatedA = Swift.Void
 public typealias deprecatedImplicitlyA = Swift.Void
 @available(*, unavailable, message: "Obsoleted")
 public typealias obsoletedA = Swift.Void
-@available(*, deprecated, renamed: "renamed", message: "Deprecated")
+@available(*, deprecated, message: "Deprecated. Replacement: renamed")
 public typealias renamedA = Swift.Void
 public final class deprecatedChildT : main.deprecatedT {
     public var deprecationFurtherReinforcedV: Swift.Void {
@@ -89,6 +89,7 @@ open class deprecatedT : KotlinRuntime.KotlinBase {
             return deprecatedT_deprecationRestatedV_get(self.__externalRCRef())
         }
     }
+    @available(*, deprecated, message: "Deprecated")
     public override init() {
         let __kt = __root___deprecatedT_init_allocate()
         super.init(__externalRCRef: __kt)
@@ -361,7 +362,7 @@ open class normalT : KotlinRuntime.KotlinBase {
         return normalT_removedInFutureF(self.__externalRCRef())
     }
 }
-@available(*, deprecated, renamed: "renamed", message: "Deprecated")
+@available(*, deprecated, message: "Deprecated. Replacement: renamed")
 public final class renamedT : KotlinRuntime.KotlinBase {
     public override init() {
         let __kt = __root___renamedT_init_allocate()
@@ -392,7 +393,7 @@ public var obsoletedV: Swift.Void {
         return __root___obsoletedV_get()
     }
 }
-@available(*, deprecated, renamed: "renamed", message: "Deprecated")
+@available(*, deprecated, message: "Deprecated. Replacement: renamed")
 public var renamedV: Swift.Void {
     get {
         return __root___renamedV_get()
@@ -410,7 +411,7 @@ public func deprecatedImplicitlyF() -> Swift.Void {
 public func obsoletedF() -> Swift.Void {
     return __root___obsoletedF()
 }
-@available(*, deprecated, renamed: "renamed", message: "Deprecated")
+@available(*, deprecated, message: "Deprecated. Replacement: renamed")
 public func renamedF() -> Swift.Void {
     return __root___renamedF()
 }

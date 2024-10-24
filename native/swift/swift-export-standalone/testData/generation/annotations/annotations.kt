@@ -142,6 +142,9 @@ class normalChildT : normalT() {
 
 @Deprecated("Deprecated")
 open class deprecatedT {
+    @Deprecated("Deprecated", level = DeprecationLevel.WARNING)
+    constructor() {}
+
     open fun deprecationInheritedF() = Unit
     open val deprecationInheritedV: Unit get() = Unit
     open class deprecationInheritedT
@@ -186,6 +189,9 @@ typealias obsoletedA = Unit
 
 @Deprecated("Obsoleted", level = DeprecationLevel.ERROR)
 open class obsoletedT {
+    @Deprecated("Deprecated", level = DeprecationLevel.ERROR)
+    constructor() {}
+
     open fun deprecationInheritedF() = Unit
     open val deprecationInheritedV: Unit get() = Unit
     open class deprecationInheritedT
@@ -230,6 +236,9 @@ typealias hiddenA = Unit
 
 @Deprecated("Removed", level = DeprecationLevel.HIDDEN)
 open class hiddenT() {
+    @Deprecated("Deprecated", level = DeprecationLevel.HIDDEN)
+    constructor(int: Int) : this() {}
+
     open fun deprecationInheritedF() = Unit
     open val deprecationInheritedV: Unit get() = Unit
     open class deprecationInheritedT

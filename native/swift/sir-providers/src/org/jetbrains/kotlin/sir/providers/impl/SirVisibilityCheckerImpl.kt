@@ -133,7 +133,7 @@ public class SirVisibilityCheckerImpl(
 
     private val KaVariableSymbol.hasHiddenAccessors
         get() = (this as? KaPropertySymbol)?.let {
-            it.getter?.deprecatedAnnotation?.level == DeprecationLevel.HIDDEN && it.setter?.deprecatedAnnotation?.level == DeprecationLevel.HIDDEN
+            it.getter?.deprecatedAnnotation?.level == DeprecationLevel.HIDDEN || it.setter?.deprecatedAnnotation?.level == DeprecationLevel.HIDDEN
         } ?: false
 
     private fun KaClassSymbol.hasHiddenAncestors(ktAnalysisSession: KaSession): Boolean = with(ktAnalysisSession) {
